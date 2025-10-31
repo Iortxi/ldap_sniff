@@ -63,33 +63,50 @@ def comando_escuchador(ssh):
 
 
 """ Agnade los bindRequests de la segunda captura a la primera y borra la segunda """
-def unir_dos_capturas(captura1, captura2): # Otro flag con el -o
+def unir_dos_capturas(captura1, captura2, output):
     writer = PcapWriter(captura1, append=True, sync=True)
+
+    w = None
+    if output:
+        w = open(output, 'w+')
 
     for paquete, _ in RawPcapReader(captura2):
         pkt = Ether(paquete)
         es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
         if es_bind_request:
             writer.write(pkt)
+            if w is not None:
+                w.write(f'{ip_s}:{ip_d}:{nombre}:{passwd}')
+
             # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
 
     writer.close()
+    if w is not None:
+        w.close()
     os.remove(captura2)
 
 
 
-def filtrar_ldap(captura): # Otro flag con el -o
+def filtrar_ldap(captura, output):
     nombre_temporal = f'{captura.split(".pcap")[0]}_temp.pcap'
     writer = PcapWriter(nombre_temporal, sync=True)
-    
+
+    w = None
+    if output:
+        w = open(output, 'w')
+
     for paquete, _ in RawPcapReader(captura):
         pkt = Ether(paquete)
         es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
         if es_bind_request:
             writer.write(pkt)
+            if w is not None:
+                w.write(f'{ip_s}:{ip_d}:{nombre}:{passwd}')
             # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
 
     writer.close()
+    if w is not None:
+        w.close()
     shutil.move(nombre_temporal, captura)
 
 
@@ -139,9 +156,9 @@ if __name__ == '__main__':
             if primero:
                 primero = False
                 shutil.move(f'{args.filename}_temp.pcap', nombre_captura_final)
-                filtrar_ldap(nombre_captura_final)
+                filtrar_ldap(nombre_captura_final, args.output)
             else:
-                unir_dos_capturas(nombre_captura_final, f'{args.filename}_temp.pcap')
+                unir_dos_capturas(nombre_captura_final, f'{args.filename}_temp.pcap', args.output)
 
 
             if opcion == 0: # Detener escuchador y seguir
