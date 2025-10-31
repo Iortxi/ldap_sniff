@@ -78,8 +78,6 @@ def unir_dos_capturas(captura1, captura2, output):
             if w is not None:
                 w.write(f'{ip_s}:{ip_d}:{nombre}:{passwd}')
 
-            # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
-
     writer.close()
     if w is not None:
         w.close()
@@ -102,7 +100,6 @@ def filtrar_ldap(captura, output):
             writer.write(pkt)
             if w is not None:
                 w.write(f'{ip_s}:{ip_d}:{nombre}:{passwd}')
-            # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
 
     writer.close()
     if w is not None:
