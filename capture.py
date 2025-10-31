@@ -2,7 +2,7 @@
 
 import argparse, sys, os, shutil
 from ssh import *
-from scapy.all import TCP, IP, RawPcapReader, PcapWriter, Ether
+from scapy.all import RawPcapReader, PcapWriter, Ether
 from passwords_ldap import *
 
 
@@ -62,7 +62,7 @@ def comando_escuchador(ssh):
 
 
 
-""" Une dos capturas de trafico. Sobreescribe el nombre de la primera y borra la segunda """
+""" Agnade los bindRequests de la segunda captura a la primera y borra la segunda """
 def unir_dos_capturas(captura1, captura2): # Otro flag con el -o
     writer = PcapWriter(captura1, append=True, sync=True)
 
