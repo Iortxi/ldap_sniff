@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 
-import argparse
-from scapy.all import rdpcap, TCP, IP
+import argparse, os, sys
+from scapy.all import TCP, IP, RawPcapReader, Ether
 
 
 def parsear_ldap_bind(payload):
     """
-    Extrae el nombre y la contraseña (simple bind) de un paquete LDAP BindRequest.
+    Extrae el nombre y la contraseña (simple bind) de un paquete LDAP BindRequest
     """
     try:
         if payload[0] != 0x30:
@@ -37,26 +37,29 @@ def parsear_ldap_bind(payload):
 
         return nombre, password
 
-    except Exception as e:
+    except:
         return None, None
 
 
-def filtrar_paquetes(paquetes_totales):
-    resultados = []
-    for pkt in paquetes_totales:
-        if IP in pkt and TCP in pkt:
-            if pkt[TCP].dport == 389 and pkt[TCP].payload:
-                raw = bytes(pkt[TCP].payload)
-                if 0x60 in raw:  # BindRequest
-                    name, pwd = parsear_ldap_bind(raw)
-                    if name and pwd:
-                        resultados.append((pkt[IP].src, pkt[IP].dst, name, pwd))
-    return resultados
+
+# Funcion que devuelva un booleano. True si un paquete (parametro) es un bindRequest, que utilice parsear_ldap_bind()
+def paquete_ldap_bind_request(paquete):
+    if IP in paquete and TCP in paquete and paquete[TCP].payload and paquete[TCP].dport == 389:
+        raw = bytes(paquete[TCP].payload)
+        if len(raw) > 0 and 0x60 in raw and raw[0] == 0x30:
+            nombre, passwd = parsear_ldap_bind(raw)
+            return nombre and passwd, nombre, passwd
+    return False, None, None
 
 
-def mostrar_resultados(resultados):
-    for ip1, ip2, name, pwd in resultados:
-        print(f"{ip1}:{ip2}:{name}:{pwd}")
+
+def filtrar_paquetes(captura):
+    for paquete, _ in RawPcapReader(captura):
+        pkt = Ether(paquete)
+        es_bind_request, nombre, passwd = paquete_ldap_bind_request(pkt)
+        if es_bind_request:
+            print(f'{pkt[IP].src}:{pkt[IP].dst}:{nombre}:{passwd}')
+
 
 
 
@@ -94,11 +97,11 @@ def mostrar_resultados(resultados):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--captura', required=True, help='Captura de tráfico en formato pcap', type=str)
+    parser.add_argument('-f', '--file', required=True, help='Traffic capture file (pcap)', type=str)
     args = parser.parse_args()
-    
-    paquetes = rdpcap(args.captura)
-    
-    resultados = filtrar_paquetes(paquetes)
-        
-    mostrar_resultados(resultados)
+
+    if not os.path.isfile(args.file):
+        print('[!] Traffic capture file does not exist')
+        sys.exit(1)
+
+    filtrar_paquetes(args.file)

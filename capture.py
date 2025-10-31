@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 
-import argparse, sys, os, shutil, pyshark
+import argparse, sys, os, shutil
 from ssh import *
-from enum import Enum
-from scapy.utils import RawPcapReader, PcapWriter
+from scapy.all import TCP, IP, RawPcapReader, PcapWriter, Ether
+
 
 # Traffic listeners supported (base commands)
 listeners = {
@@ -62,37 +62,34 @@ def comando_escuchador(ssh):
 
 
 """ Une dos capturas de trafico. Sobreescribe el nombre de la primera y borra la segunda """
-# def unir_dos_capturas(captura1, captura2):
-#     nombre_temporal = f"{captura1.split('.pcap')[0]}_temp.pcap"
-#     writer = PcapWriter(nombre_temporal, sync=True)
-
-#     for fname in [captura1, captura2]: # ¿Filtrar LDAP, bindRequests...?
-#         for pkt_data, pkt_metadata in RawPcapReader(fname):
-#             writer.write(pkt_data)
-
-#     writer.close()
-
-#     shutil.move(nombre_temporal, captura1)
-#     os.remove(captura2)
-
 def unir_dos_capturas(captura1, captura2):
     nombre_temporal = f"{captura1.split('.pcap')[0]}_temp.pcap"
+    writer = PcapWriter(nombre_temporal, sync=True)
 
-    # Abrimos ambas capturas con filtro de display (LDAP bindRequest)
-    capturas = [
-        pyshark.FileCapture(captura1, display_filter="ldap.message.id and ldap and ldap.message.type == 0"),
-        pyshark.FileCapture(captura2, display_filter="ldap.message.id and ldap and ldap.message.type == 0")
-    ]
+    for fname in [captura1, captura2]: # ¿Filtrar LDAP, bindRequests...?
+        for pkt_data, _ in RawPcapReader(fname):
+            writer.write(pkt_data)
 
-    # Creamos el writer
-    with pyshark.FileCapture(output_file=nombre_temporal, use_json=True) as writer:
-        for cap in capturas:
-            for pkt in cap:
-                writer.eventloop.packet_arrived(pkt)
+    writer.close()
 
-    # Cerramos y reemplazamos archivos
     shutil.move(nombre_temporal, captura1)
     os.remove(captura2)
+
+
+
+def filtrar_ldap(captura):
+    nombre_temporal = f"{captura.split('.pcap')[0]}_temp.pcap"
+    writer = PcapWriter(nombre_temporal, sync=True)
+
+    for pkt_data, _ in RawPcapReader(captura):
+        pkt = Ether(pkt_data)
+        if IP in pkt and TCP in pkt and pkt[TCP].payload:
+            raw = bytes(pkt[TCP].payload)
+            if 0x60 in raw: # BindRequest (+ otros paquetes LDAP sin passwords)
+                writer.write(pkt)
+
+    writer.close()
+    shutil.move(nombre_temporal, captura)
 
 
 
@@ -101,8 +98,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
 
     # Flags de captura de trafico
-    parser.add_argument('-i', '--interface', required=True, help='Network interface to listen', type=str)
-    parser.add_argument('-p', '--port', required=True, help='Port to listen', type=int)
+    parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
+    parser.add_argument('-p', '--port', required=True, help='Remote LDAP port to listen', type=int)
     parser.add_argument('-n', '--filename', required=True, help='Base name for capture files', type=str)
 
     # Flags de SSH
@@ -112,6 +109,9 @@ if __name__ == '__main__':
     parser.add_argument('-pk', '--pkfile', required=False, help='Private key file', type=str)
     parser.add_argument('-pkp', '--pkfilepw', required=False, help='Private key passphrase if needed', type=str)
     parser.add_argument('-sshp', '--ssh_port', required=False, default=22, help='SSH port to connect (default 22)', type=int)
+
+    # Flag de output de contrasegnas
+    parser.add_argument('-o', '--output', required=False, help='Output file for passwords (stdout default)', type=str)
 
     args = parser.parse_args()
 
@@ -139,6 +139,7 @@ if __name__ == '__main__':
             if primero:
                 primero = False
                 shutil.move(f"0_{args.filename}.pcap", nombre_captura_final)
+                filtrar_ldap(nombre_captura_final)
             else:
                 unir_dos_capturas(nombre_captura_final, f'{contador}_{args.filename}.pcap')
 
