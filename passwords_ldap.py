@@ -43,22 +43,22 @@ def parsear_ldap_bind(payload):
 
 
 # Funcion que devuelva un booleano. True si un paquete (parametro) es un bindRequest, que utilice parsear_ldap_bind()
-def paquete_ldap_bind_request(paquete):
-    if IP in paquete and TCP in paquete and paquete[TCP].payload and paquete[TCP].dport == 389:
-        raw = bytes(paquete[TCP].payload)
+def paquete_ldap_bind_request(pkt):
+    if IP in pkt and TCP in pkt and pkt[TCP].payload and pkt[TCP].dport == 389:
+        raw = bytes(pkt[TCP].payload)
         if len(raw) > 0 and 0x60 in raw and raw[0] == 0x30:
             nombre, passwd = parsear_ldap_bind(raw)
-            return nombre and passwd, nombre, passwd
-    return False, None, None
+            return nombre and passwd, pkt[IP].src, pkt[IP].dst, nombre, passwd
+    return False, None, None, None, None
 
 
 
 def filtrar_paquetes(captura):
     for paquete, _ in RawPcapReader(captura):
         pkt = Ether(paquete)
-        es_bind_request, nombre, passwd = paquete_ldap_bind_request(pkt)
+        es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
         if es_bind_request:
-            print(f'{pkt[IP].src}:{pkt[IP].dst}:{nombre}:{passwd}')
+            print(f'{ip_s}:{ip_d}:{nombre}:{passwd}')
 
 
 

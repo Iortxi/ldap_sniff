@@ -3,12 +3,13 @@
 import argparse, sys, os, shutil
 from ssh import *
 from scapy.all import TCP, IP, RawPcapReader, PcapWriter, Ether
+from passwords_ldap import *
 
 
 # Traffic listeners supported (base commands)
 listeners = {
-    'snoop': "snoop -o /tmp/CONTADOR_NOMBRE.pcap -d INTERFAZ port PUERTO",
-    'tcpdump': "tcpdump -n -v -i INTERFAZ port PUERTO -w /tmp/CONTADOR_NOMBRE.pcap",
+    'snoop': 'snoop -o /tmp/NOMBRE.pcap -d INTERFAZ port PUERTO',
+    'tcpdump': 'tcpdump -n -v -i INTERFAZ port PUERTO -w /tmp/NOMBRE.pcap',
 }
 
 
@@ -21,8 +22,8 @@ def soltar_error(mensaje, codigo):
 
 
 """ Genera el string con el comando de captura de trafico a ejecutar remotamente """
-def actualizar_comando(escuchador, args, contador):
-    return listeners[escuchador].replace('INTERFAZ', args.interface).replace('PUERTO', str(args.port)).replace('CONTADOR_NOMBRE', f"{contador}_{args.filename}")
+def actualizar_comando(escuchador, args):
+    return listeners[escuchador].replace('INTERFAZ', args.interface).replace('PUERTO', str(args.port)).replace('NOMBRE', args.filename)
 
 
 
@@ -62,31 +63,31 @@ def comando_escuchador(ssh):
 
 
 """ Une dos capturas de trafico. Sobreescribe el nombre de la primera y borra la segunda """
-def unir_dos_capturas(captura1, captura2):
-    nombre_temporal = f"{captura1.split('.pcap')[0]}_temp.pcap"
-    writer = PcapWriter(nombre_temporal, sync=True)
+def unir_dos_capturas(captura1, captura2): # Otro flag con el -o
+    writer = PcapWriter(captura1, append=True, sync=True)
 
-    for fname in [captura1, captura2]: # ¿Filtrar LDAP, bindRequests...?
-        for pkt_data, _ in RawPcapReader(fname):
-            writer.write(pkt_data)
+    for paquete, _ in RawPcapReader(captura2):
+        pkt = Ether(paquete)
+        es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
+        if es_bind_request:
+            writer.write(pkt)
+            # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
 
     writer.close()
-
-    shutil.move(nombre_temporal, captura1)
     os.remove(captura2)
 
 
 
-def filtrar_ldap(captura):
-    nombre_temporal = f"{captura.split('.pcap')[0]}_temp.pcap"
+def filtrar_ldap(captura): # Otro flag con el -o
+    nombre_temporal = f'{captura.split(".pcap")[0]}_temp.pcap'
     writer = PcapWriter(nombre_temporal, sync=True)
-
-    for pkt_data, _ in RawPcapReader(captura):
-        pkt = Ether(pkt_data)
-        if IP in pkt and TCP in pkt and pkt[TCP].payload:
-            raw = bytes(pkt[TCP].payload)
-            if 0x60 in raw: # BindRequest (+ otros paquetes LDAP sin passwords)
-                writer.write(pkt)
+    
+    for paquete, _ in RawPcapReader(captura):
+        pkt = Ether(paquete)
+        es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
+        if es_bind_request:
+            writer.write(pkt)
+            # Escribir ip_origen, ip_destino, nombre, passwd en fichero (si se ha escrito -o)
 
     writer.close()
     shutil.move(nombre_temporal, captura)
@@ -119,13 +120,12 @@ if __name__ == '__main__':
 
     escuchador = comando_escuchador(ssh)
 
-    comando = actualizar_comando(escuchador, args, 0)
+    comando = actualizar_comando(escuchador, args)
 
     primero = True
 
     nombre_captura_final = f'{args.filename}.pcap'
 
-    contador = 0
     pid_remoto = iniciar_captura(ssh, comando)
     while True:
         try:
@@ -133,20 +133,18 @@ if __name__ == '__main__':
 
             parar_captura(ssh, pid_remoto)
 
-            recoger_y_borrar_captura(ssh, scp, args, contador)
+            recoger_y_borrar_captura(ssh, scp, args)
 
-            # Fusionar la captura recogida con las que ya habia
+            # Fusionar la captura recogida con las que ya habia (todas compactadas en una)
             if primero:
                 primero = False
-                shutil.move(f"0_{args.filename}.pcap", nombre_captura_final)
+                shutil.move(f'{args.filename}_temp.pcap', nombre_captura_final)
                 filtrar_ldap(nombre_captura_final)
             else:
-                unir_dos_capturas(nombre_captura_final, f'{contador}_{args.filename}.pcap')
+                unir_dos_capturas(nombre_captura_final, f'{args.filename}_temp.pcap')
 
 
             if opcion == 0: # Detener escuchador y seguir
-                contador += 1
-                comando = actualizar_comando(escuchador, args, contador)
                 pid_remoto = iniciar_captura(ssh, comando)
 
             elif opcion == 1: # Detener escuchador y parar

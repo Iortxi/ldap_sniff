@@ -48,12 +48,12 @@ def conectarse_a_host(args):
 
 
 """ Recoge la captura remota guardada y la borra en el servidor remoto """
-def recoger_y_borrar_captura(ssh, scp, args, contador):
+def recoger_y_borrar_captura(ssh, scp, args):
     # Nombre del fichero
-    fichero = f'{contador}_{args.filename}.pcap'
+    fichero = f'{args.filename}.pcap'
 
     # Recoger captura guardada remotamente
-    scp.get(f'/tmp/{fichero}', fichero)
+    scp.get(f'/tmp/{fichero}', f'{args.filename}_temp.pcap')
     
     # Borrar captura remota
     comando_ok(ssh, f'rm -f /tmp/{fichero}')
