@@ -18,5 +18,9 @@ if __name__ == '__main__':
 
     w = None
     if args.output:
-        with open(args.output, 'w', buffering=1) as w:
-            filtrar_paquetes(args.file, w)
+        w = open(args.output, 'w', buffering=1)
+
+    filtrar_paquetes(args.file, w)
+
+    if w is not None:
+        w.close()
