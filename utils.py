@@ -80,12 +80,15 @@ def parsear_ldap_bind(payload):
 
 
 
+""" ¿Devolver el strinf con la info directamente? Vacio -> Como si fuera false """
+""" Si se hace DNS inverso, pasar el diccionario con las IPs resueltas por parametro """
 """ Devuelve True, IP origen, IP destino, usuario, password si 'pkt' es un LDAP bindRequest """
 def paquete_ldap_bind_request(pkt):
     if IP in pkt and TCP in pkt and pkt[TCP].payload and pkt[TCP].dport == 389:
         raw = bytes(pkt[TCP].payload)
         if len(raw) > 0 and 0x60 in raw and raw[0] == 0x30:
             nombre, passwd = parsear_ldap_bind(raw)
+            # Aqui estaria lo del DNS inverso, con "pkt[IP].src" y "pkt[IP].dst"
             return nombre and passwd, pkt[IP].src, pkt[IP].dst, nombre, passwd
     return False, None, None, None, None
 
