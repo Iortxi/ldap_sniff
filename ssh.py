@@ -1,7 +1,6 @@
 
-from capture import soltar_error
 import paramiko, os, time
-
+from utils import soltar_error
 
 """ Genera el objeto clave privada a partir de un fichero con una clave privada """
 def clave_privada(args):
@@ -49,14 +48,12 @@ def conectarse_a_host(args):
 
 """ Recoge la captura remota guardada y la borra en el servidor remoto """
 def recoger_y_borrar_captura(ssh, scp, args):
-    # Nombre del fichero
-    fichero = f'{args.filename}.pcap'
-
     # Recoger captura guardada remotamente
-    scp.get(f'/tmp/{fichero}', f'{args.filename}_temp.pcap')
+    scp.get(f'/tmp/{args.filename}', f'{args.filename}_temp')
     
     # Borrar captura remota
-    comando_ok(ssh, f'rm -f /tmp/{fichero}')
+    comando_ok(ssh, f'rm -f /tmp/{args.filename}')
+    # del /f /q FICHERO -> Equivalente en Windows a rm -f FICHERO
 
 
 

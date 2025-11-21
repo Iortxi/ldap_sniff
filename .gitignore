@@ -1,2 +1,4 @@
-__pycache__/
-*.pcap
+*
+#!*/ -> No ignora directorios, por si hay .py's dentro, en este caso no
+!requirements.txt
+!*.py
