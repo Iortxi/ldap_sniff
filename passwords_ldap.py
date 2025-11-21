@@ -15,6 +15,8 @@ if __name__ == '__main__':
         sys.exit(1)
 
     convertir_si_necesario(args.file)
-    w = open(args.output, 'w', buffering=1)
-    filtrar_paquetes(args.file, w)
-    w.close()
+
+    w = None
+    if args.output:
+        with open(args.output, 'w', buffering=1) as w:
+            filtrar_paquetes(args.file, w)
