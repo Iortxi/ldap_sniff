@@ -129,7 +129,6 @@ if __name__ == '__main__':
 
             recoger_y_borrar_captura(ssh, scp, args)
 
-            # Fusionar la captura recogida con las que ya habia (todas compactadas en una)
             if primero:
                 primero = False
                 shutil.move(nombre_temporal, args.filename)
