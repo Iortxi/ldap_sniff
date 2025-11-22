@@ -3,7 +3,6 @@
 import argparse, os, shutil
 from ssh import *
 from scapy.all import PcapWriter
-from passwords_ldap import *
 from utils import *
 
 
@@ -29,8 +28,10 @@ def recoger_opcion(mostrar_menu):
         print('[0] Collect remote capture and keep capturing')
         print('[1] Collect remote capture and stop capturing\n')
 
+    # Espera
     input_ = input('\n[?] Select an option (0 or 1): ')
 
+    # Bucle infinito hasta obtener un resultado valido
     while True:
         try:
             opcion = int(input_)
@@ -46,29 +47,47 @@ def recoger_opcion(mostrar_menu):
 
 """ Devuelve un objeto Listener con el programa de captura que este disponible en el servidor remoto """
 def comando_escuchador(ssh):
+    # Diccionario con los programas de escucha disponibles y las plantillas de sus comandos
     global listeners
 
+    # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
     for escuchador in listeners.keys():
         if comando_ok(ssh, f'which {escuchador}'):
             return escuchador
 
+    # Ningun programa de escucha de los disponibles existe en la maquina remota
     soltar_error('Any of the listeners supported are available on remote host', 5)
 
 
 
 """ Agnade los bindRequests de la segunda captura a la primera y borra la segunda """
 def unir_dos_capturas(captura1, captura2, output):
+    # Escritor en modo append para no sobreescribir los paquetes ya existentes
     writer = PcapWriter(captura1, append=True, sync=True)
+
+    # 
     generica(captura2, output, writer, False)
+
+    # Eliminar la segunda captura (sus paquetes ya se han fusionado con todos los anteriores)
     os.remove(captura2)
 
 
 
 """ Filtra los bindRequests de una captura en formato pcap y la sobreescribe """
 def filtrar_ldap_primera_captura(captura, output):
+    # Nombre temporal del fichero de captura con solo los paquetes LDAP
     nombre_temporal = f'{captura}_temp'
+
+    # Si ya existe localmente una captura de trafico con ese nombre, se sobreescribe
+    os.remove(nombre_temporal)
+    
+    # Escritor del fichero de captura
     writer = PcapWriter(nombre_temporal, sync=True)
+
+    # 
     generica(captura, output, writer, True)
+    
+    # Se reemplaza el nombre temporal por el especificado por el usuario
     shutil.move(nombre_temporal, captura)
 
 
@@ -106,7 +125,7 @@ if __name__ == '__main__':
     parser.add_argument('-pkp', '--pkfilepw', required=False, help='Private key passphrase if needed', type=str)
     parser.add_argument('-sshp', '--ssh_port', required=False, default=22, help='SSH port to connect (default 22)', type=int)
 
-    # Flag de output de contrasegnas
+    # Flag de output de informacion (IPs origen y destino, DN y contrasegna)
     parser.add_argument('-o', '--output', required=False, help='Output file for info (stdout default)', type=str)
 
     args = parser.parse_args()

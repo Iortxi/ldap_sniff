@@ -1,110 +1,87 @@
 
 import sys, os
-from scapy.all import TCP, IP, RawPcapReader, Ether
-
-"""
-POSIBLE MEJORA: TENER EN CUENTA SOLO LAS CONTRASEÑAS VALIDAS, NO LAS INCORRECTAS
-POSIBLE IDEA: DICCIONARIO DE USUARIOS QUE HAN ABIERTO UN BINDREQUEST, Y CUANDO SE VEA UN BINDRESPONSE, SE COMPRUEBE SI SE TIENE UNA ENTRADA CON ESE USUARIO
-
-S1 -> S2 - bindRequest (con la pass)
-
-si ok -> bindResponse OK
-si no ok -> bindResponse NO OK
-NO CREO QUE SE PUEDA, A VECES NO SE RECOGE EL BINDRESPONSE
-
-------------------------------------------------------------------------------------------------------------------------
-
-POSIBLE MEJORA: HACER RESOLUCIONES INVERSAS DE DNS CON LAS IPs, Y SI NO SON EXITOSAS, PONER SOLO LA IP
-UTILIZAR DICCIONARIO (IP:NOMBRE) PARA NO REPETIR CONSULTAS
-import dns.resolver
-import dns.reversename
-def reverse_dns(ip, timeout=2.0):
-    try:
-        rev_name = dns.reversename.from_address(ip)
-
-        # Resolver con timeout personalizado
-        resolver = dns.resolver.Resolver()
-        resolver.timeout = timeout
-        resolver.lifetime = timeout
-
-        respuesta = resolver.resolve(rev_name, "PTR")
-
-        # Tomamos el primer nombre y quitamos el punto final
-        nombre = respuesta[0].to_text().rstrip('.')
-        return nombre
-
-    except Exception:
-        # Si falla por timeout, NXDOMAIN, etc., devolver la IP original
-        return ip
-"""
+from scapy.all import IP, RawPcapReader, Ether
+from pyasn1.codec.ber import decoder
+from pyasn1_ldap.rfc4511 import LDAPMessage
 
 
-
-""" Finaliza la ejecucion del programa con un mensaje de error y un codigo de estado """
+""" Finaliza la ejecucion del programa con un mensaje de error y un codigo de salida """
 def soltar_error(mensaje, codigo):
     print(f'\n[!] {mensaje}\n')
     sys.exit(codigo)
 
 
 
-""" Extrae el nombre y la contraseña (simple bind) de un paquete LDAP BindRequest """
-def parsear_ldap_bind(payload):
+""" Devuelve True si un paquete (formato bytes) es un LDAP bindRequest """
+def es_bind_request(data):
     try:
-        idx = payload.index(0x60)  # BindRequest start
-        cursor = idx + 2  # Skip 0x60 and length byte
+        # Se calcula el offset a partir del cual empieza la capa LDAP
+        offset = data.find(b'\x30')
 
-        # Skip version (usually 0x02 0x01 0x03 for version 3)
-        if payload[cursor] == 0x02:
-            cursor += 2  # tag + length
-            cursor += 1  # skip version value
+        # Bytes de la capa LDAP
+        ldap = data[offset:]
 
-        # Extract name (LDAPDN, usually an Octet String - tag 0x04)
-        nombre = ""
-        if payload[cursor] == 0x04:
-            name_len = payload[cursor + 1]
-            name_bytes = payload[cursor + 2:cursor + 2 + name_len]
-            nombre = name_bytes.decode(errors="ignore")
-            cursor = cursor + 2 + name_len
+        # Capa LDAP parseada
+        msg, _ = decoder.decode(ldap, asn1Spec=LDAPMessage())
 
-        # Extract simple password (tag 0x80)
-        password = ""
-        if payload[cursor] == 0x80:
-            pwd_len = payload[cursor + 1]
-            pwd_bytes = payload[cursor + 2:cursor + 2 + pwd_len]
-            password = pwd_bytes.decode(errors="ignore")
+        return msg['protocolOp'].getName() == 'bindRequest'
 
-        return nombre, password
-
-    except:
-        return None, None
+    # Si los bytes no encajan, el paquete no es LDAP
+    except Exception:
+        return False
 
 
 
-""" ¿Devolver el strinf con la info directamente? Vacio -> Como si fuera false """
-""" Si se hace DNS inverso, pasar el diccionario con las IPs resueltas por parametro """
-""" Devuelve True, IP origen, IP destino, usuario, password si 'pkt' es un LDAP bindRequest """
-def paquete_ldap_bind_request(pkt):
-    if IP in pkt and TCP in pkt and pkt[TCP].payload and pkt[TCP].dport == 389:
-        raw = bytes(pkt[TCP].payload)
-        if len(raw) > 0 and 0x60 in raw and raw[0] == 0x30:
-            nombre, passwd = parsear_ldap_bind(raw)
-            # Aqui estaria lo del DNS inverso, con "pkt[IP].src" y "pkt[IP].dst"
-            return nombre and passwd, pkt[IP].src, pkt[IP].dst, nombre, passwd
-    return False, None, None, None, None
+""" Extrae informacion (IP origen, IP destino, dn y contraseña) de un paquete LDAP BindRequest """
+def info_bindrequest(data):
+    pkt = Ether(data)
+
+    # IPs origen y destino
+    ip_origen = pkt[IP].src
+    ip_destino = pkt[IP].dst
+
+    # Calculo del offset y bytes de la capa LDAP
+    offset = data.find(b'\x30')
+    ldap = data[offset:]
+
+    # Capa LDAP parseada
+    msg, _ = decoder.decode(ldap, asn1Spec=LDAPMessage())
+
+    # Contenido bindRequest del paquete
+    bind = msg['protocolOp']['bindRequest']
+
+    # DN
+    dn = str(bind['name'])
+
+    # Metodo de autenticacion
+    auth = bind['authentication']
+
+    # Autenticacion con contrasegna
+    if auth.getName() == 'simple':
+        password = bytes(auth['simple']).decode()
+    
+    # Otros metodos de autenticacion
+    else:
+        password = ''
+
+    return ip_origen, ip_destino, dn, password
 
 
 
 """ Filtra los bindRequests de 'captura' (formato pcap) y escribe la info (fichero o stdout). Opcionalmente escribe los bindRequests en una captura de trafico """
 def filtrar_paquetes(captura, writer_output = None, writer_captura = None):
     for paquete, _ in RawPcapReader(captura):
-        pkt = Ether(paquete)
-        es_bind_request, ip_s, ip_d, nombre, passwd = paquete_ldap_bind_request(pkt)
-        if es_bind_request:
-            if writer_captura is not None:
-                writer_captura.write(pkt)
+        # Si el paquete es un LDAP bindRequest, se extrae su informacion
+        if es_bind_request(paquete):
+            ip_s, ip_d, nombre, passwd = info_bindrequest(paquete)
             
+            # Escribir opcionalmente el paquete en una captura de trafico
+            if writer_captura is not None:
+                writer_captura.write(Ether(paquete))
+
             s = f'{ip_s}:{ip_d}:{nombre}:{passwd}'
 
+            # Escribir opcionalmente la informacion en un fichero de texto plano o por pantalla
             if writer_output is not None:
                 writer_output.write(f'{s}\n')
             else:
@@ -117,7 +94,7 @@ def es_pcap(captura):
     with open(captura, "rb") as f:
         bytes = f.read(4)
 
-    # return magic == b'\x0a\x0d\x0d\x0a' # pcapng en teoria
+    # return magic == b'\x0a\x0d\x0d\x0a' # Formato pcapng
     return bytes == b'\xd4\xc3\xb2\xa1' or bytes == b'\xa1\xb2\xc3\xd4'
 
 

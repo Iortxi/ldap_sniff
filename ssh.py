@@ -2,9 +2,10 @@
 import paramiko, os, time
 from utils import soltar_error
 
+
 """ Genera el objeto clave privada a partir de un fichero con una clave privada """
 def clave_privada(args):
-
+    # Se ha especificado una clave privada pero no existe
     if not os.path.isfile(args.pkfile):
         soltar_error('Private key file does not exist', 2)
 
@@ -17,12 +18,14 @@ def clave_privada(args):
         except:
             continue
 
+    # El formato de la clave privada especificada no es valido
     soltar_error('Private key type not identified (accepted RSA, ED25519, ECDSA, DSA) or passphrase incorrect', 3)
 
 
 
 """ Establece la conexion SSH y devuelve sus sockets """
 def conectarse_a_host(args):
+    # No se ha especificado ningun metodo de autenticacion
     if not args.pkfile and not args.password:
         soltar_error('Password or private key file required (authentication)', 1)
 
@@ -30,11 +33,14 @@ def conectarse_a_host(args):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
+    # Por defecto se utiliza contrasegna
     if args.password:
         try:
             ssh.connect(hostname=args.server, username=args.user, password=args.password, port=args.ssh_port)
         except:
             soltar_error('SSH session could not be established', 4)
+    
+    # Autenticacion por clave privada
     else:
         pkey = clave_privada(args)
         try:
@@ -57,19 +63,19 @@ def recoger_y_borrar_captura(ssh, scp, args):
 
 
 
-""" Ejecuta remotamente un comando y devuelve si ha sido exitoso o no """
+""" Ejecuta remotamente un comando y devuelve True si se ha ejecutado correctamente """
 def comando_ok(ssh, comando):
     # Ejecuta un comando pero no espera a que acabe
     _, stdout, _ = ssh.exec_command(comando)
     
-    # Espera a que el comando termine y saca su codigo de estado
-    codigo_estado = stdout.channel.recv_exit_status()
+    # Espera a que el comando termine y saca su codigo de salida
+    codigo_salida = stdout.channel.recv_exit_status()
 
-    return codigo_estado == 0
+    return codigo_salida == 0
 
 
 
-""" Inicia remotamente un proceso de captura con el programa de captura disponible """
+""" Inicia un proceso de captura remoto con el programa de captura disponible y devuelve su PID """
 def iniciar_captura(ssh, comando_remoto):
     comando = f"nohup {comando_remoto} > /dev/null 2>&1 & echo $!"
 
@@ -88,7 +94,7 @@ def iniciar_captura(ssh, comando_remoto):
 
 
 
-""" Detiene remotamente el proceso de captura de trafico """
+""" Detiene el proceso de captura de trafico remoto """
 def parar_captura(ssh, pid, timeout=2):
     # Intentamos terminar el proceso con SIGTERM
     ssh.exec_command(f"kill -TERM {pid} || true")
