@@ -110,17 +110,17 @@ def generica(captura, output, writer, primero):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description='Remote LDAP sniffer with SSH')
 
     # Flags de captura de trafico
     parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
-    parser.add_argument('-p', '--port', required=True, help='Remote LDAP port to listen', type=int)
+    parser.add_argument('-p', '--port', required=True, help='Remote LDAP port to listen (default 389)', type=int, default=389)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture', type=str)
 
     # Flags de SSH
     parser.add_argument('-s', '--server', required=True, help='Remote SSH server', type=str)
-    parser.add_argument('-u', '--user', required=True, help='Remote SSH user (able to capture LDAP traffic)', type=str)
-    parser.add_argument('-pw', '--password', required=False, help='Remote SSH password', type=str)
+    parser.add_argument('-u', '--user', required=True, help='Remote SSH user (able to capture traffic in the LDAP port)', type=str)
+    parser.add_argument('-pw', '--password', required=False, help='Remote SSH user password', type=str)
     parser.add_argument('-pk', '--pkfile', required=False, help='Private key file', type=str)
     parser.add_argument('-pkp', '--pkfilepw', required=False, help='Private key passphrase if needed', type=str)
     parser.add_argument('-sshp', '--ssh_port', required=False, default=22, help='SSH port to connect (default 22)', type=int)
