@@ -3,50 +3,26 @@ import paramiko, os, time
 from utils import soltar_error
 
 
-""" Genera el objeto clave privada a partir de un fichero con una clave privada """
-def clave_privada(args):
-    # Se ha especificado una clave privada pero no existe
-    if not os.path.isfile(args.pkfile):
-        soltar_error('Private key file does not exist', 2)
-
-    tipos_claves = [paramiko.RSAKey, paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.DSSKey]
-
-    for tipo in tipos_claves:
-        try:
-            key = tipo.from_private_key_file(args.pkfile, args.pkfilepw)
-            return key
-        except:
-            continue
-
-    # El formato de la clave privada especificada no es valido
-    soltar_error('Private key type not identified (accepted RSA, ED25519, ECDSA, DSA) or passphrase incorrect', 3)
-
-
-
 """ Establece la conexion SSH y devuelve sus sockets """
 def conectarse_a_host(args):
     # No se ha especificado ningun metodo de autenticacion
     if not args.pkfile and not args.password:
         soltar_error('Password or private key file required (authentication)', 1)
 
-
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # Por defecto se utiliza contrasegna
-    if args.password:
-        try:
-            ssh.connect(hostname=args.server, username=args.user, password=args.password, port=args.ssh_port)
-        except:
-            soltar_error('SSH session could not be established', 4)
-    
-    # Autenticacion por clave privada
-    else:
-        pkey = clave_privada(args)
-        try:
-            ssh.connect(hostname=args.server, username=args.user, pkey=pkey, port=args.ssh_port)
-        except:
-            soltar_error('SSH session could not be established', 4)
+    # Si se especifica una clave privada siempre la busca, y salta una excepcion si no existe aunque la contrasegna sea correcta
+    if args.pkfile and not os.path.isfile(args.pkfile):
+        args.pkfile = None
+
+    # Autenticacion por contrasegna o clave privada
+    try:
+        ssh.connect(hostname=args.server, username=args.user, port=args.ssh_port, password=args.password, key_filename=args.pkfile, passphrase=args.pkfilepw)
+    except paramiko.AuthenticationException:
+        soltar_error('SSH authentication failed', 2)
+    except:
+        soltar_error('SSH session could not be established for no authentication reason', 3)
 
     return ssh, ssh.open_sftp()
 
@@ -95,7 +71,7 @@ def iniciar_captura(ssh, comando_remoto):
 
 
 """ Detiene el proceso de captura de trafico remoto """
-def parar_captura(ssh, pid, timeout=2):
+def parar_captura(ssh, pid, timeout=3):
     # Intentamos terminar el proceso con SIGTERM
     ssh.exec_command(f"kill -TERM {pid} || true")
     time.sleep(timeout)

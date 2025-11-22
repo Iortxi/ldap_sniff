@@ -167,7 +167,7 @@ if __name__ == '__main__':
         except:
             scp.close()
             ssh.close()
-            soltar_error('[!] Unexpected exception', 5)
+            soltar_error('[!] Unexpected exception', 4)
 
     scp.close()
     ssh.close()
