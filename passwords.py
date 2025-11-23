@@ -6,7 +6,7 @@ from utils import *
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Filters LDAP passwords from a traffic capture file')
-    parser.add_argument('-f', '--file', required=True, help='Traffic capture file (only pcap)', type=str)
+    parser.add_argument('-f', '--file', required=True, help='Traffic capture file (if not pcap, it OVERWRITES)', type=str)
     parser.add_argument('-o', '--output', required=False, help='Output file for info (stdout default)', type=str)
     args = parser.parse_args()
 

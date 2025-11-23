@@ -12,7 +12,7 @@ def conectarse_a_host(args):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # Si se especifica una clave privada siempre la busca, y salta una excepcion si no existe aunque la contrasegna sea correcta
+    # Si se especifica una clave privada, paramiko siempre la busca y salta excepcion si no existe, aunque la contrasegna sea correcta
     if args.pkfile and not os.path.isfile(args.pkfile):
         args.pkfile = None
 
