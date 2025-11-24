@@ -73,7 +73,7 @@ def info_bindrequest(data: bytes) -> tuple[str, str, str, str]:
 
 
 
-def filtrar_paquetes(captura: str, dict_dns: dict, resolver_dns: bool, verbose: bool, writer_output, writer_captura = None):
+def filtrar_paquetes(captura: str, dict_dns: dict, resolver_dns: bool, verbose: bool, writer_output = None, writer_captura = None):
     """ Filtra los bindRequests de 'captura' (formato pcap) y opcionalmente escribe la info extraida de los LDAP BindRequests (fichero, stdout, captura) """
 
     # Se itera sobre los paquetes de la captura
@@ -97,10 +97,12 @@ def filtrar_paquetes(captura: str, dict_dns: dict, resolver_dns: bool, verbose: 
             # Informacion a guardar
             s = f'{ip_s}:{ip_d}:{nombre}:{passwd}'
 
-            # Escribir opcionalmente la informacion en un fichero o por pantalla
+            # Escribir la informacion en un fichero
             if writer_output is not None:
                 writer_output.write(f'{s}\n')
-            elif verbose:
+
+            # Escribir la informacion por pantalla
+            if verbose:
                 print(s)
 
 
