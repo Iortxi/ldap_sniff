@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 
 import argparse, os, shutil
-from ssh import *
 from scapy.all import PcapWriter
+from ssh import *
 from utils import *
 
 
