@@ -1,4 +1,14 @@
+
+# Ignorar todo
 *
+
 #!*/ -> No ignora directorios, por si hay .py's dentro, en este caso no
+
+# Fichero de librerias necesarias
 !requirements.txt
+
+# README
+!README.md
+
+# Ficheros de codigo fuente
 !*.py

@@ -3,8 +3,9 @@ import paramiko, os, time
 from utils import soltar_error
 
 
-""" Establece la conexion SSH y devuelve sus sockets """
 def conectarse_a_host(args):
+    """ Establece la conexion SSH y devuelve sus sockets """
+
     # No se ha especificado ningun metodo de autenticacion
     if not args.pkfile and not args.password:
         soltar_error('Password or private key file required (authentication)', 1)
@@ -12,7 +13,7 @@ def conectarse_a_host(args):
     ssh = paramiko.SSHClient()
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
 
-    # Si se especifica una clave privada, paramiko siempre la busca y salta excepcion si no existe, aunque la contrasegna sea correcta
+    # Si se especifica una clave privada, paramiko la busca y salta excepcion si no existe, aunque se haya introducido una contrasegna correcta
     if args.pkfile and not os.path.isfile(args.pkfile):
         args.pkfile = None
 
@@ -28,8 +29,9 @@ def conectarse_a_host(args):
 
 
 
-""" Recoge la captura remota guardada y la borra en el servidor remoto """
-def recoger_y_borrar_captura(ssh, scp, args):
+def recoger_y_borrar_captura(ssh: paramiko.SSHClient, scp: paramiko.SFTPClient, args):
+    """ Transfiere la captura remota y la borra en el servidor remoto """
+
     # Recoger captura guardada remotamente
     scp.get(f'/tmp/{args.filename}', f'{args.filename}_temp')
     
@@ -39,8 +41,9 @@ def recoger_y_borrar_captura(ssh, scp, args):
 
 
 
-""" Ejecuta remotamente un comando y devuelve True si se ha ejecutado correctamente """
-def comando_ok(ssh, comando):
+def comando_ok(ssh: paramiko.SSHClient, comando: str):
+    """ Ejecuta remotamente un comando y devuelve True si se ha ejecutado correctamente """
+
     # Ejecuta un comando pero no espera a que acabe
     _, stdout, _ = ssh.exec_command(comando)
     
@@ -51,10 +54,13 @@ def comando_ok(ssh, comando):
 
 
 
-""" Inicia un proceso de captura remoto con el programa de captura disponible y devuelve su PID """
-def iniciar_captura(ssh, comando_remoto):
-    comando = f"nohup {comando_remoto} > /dev/null 2>&1 & echo $!"
+def iniciar_captura(ssh: paramiko.SSHClient, comando_remoto: str):
+    """ Inicia un proceso de captura remoto con el programa de captura disponible y devuelve su PID """
 
+    # Comando que se va a dejar ejecutandose remotamente (nohup)
+    comando = f'nohup {comando_remoto} > /dev/null 2>&1 & echo $!'
+
+    # Se lanza el comando y se obtiene su PID
     _, stdout, _ = ssh.exec_command(comando)
     pid = stdout.read().decode().strip()
 
@@ -70,17 +76,18 @@ def iniciar_captura(ssh, comando_remoto):
 
 
 
-""" Detiene el proceso de captura de trafico remoto """
-def parar_captura(ssh, pid, timeout=3):
-    # Intentamos terminar el proceso con SIGTERM
-    ssh.exec_command(f"kill -TERM {pid} || true")
+def parar_captura(ssh: paramiko.SSHClient, pid: int, timeout: int = 3):
+    """ Detiene el proceso de captura de trafico remoto """
+
+    # Se intenta finalizar el proceso con la segnal SIGTERM
+    ssh.exec_command(f'kill -TERM {pid} || true')
     time.sleep(timeout)
 
     # Verificamos si sigue vivo
-    _, stdout, _ = ssh.exec_command(f"ps -p {pid} -o pid=")
+    _, stdout, _ = ssh.exec_command(f'ps -p {pid} -o pid=')
     alive = stdout.read().decode().strip()
 
     # if alive:
     #     soltar_error('RAROOOOOO', 9)
-    #     # Si sigue vivo, lo forzamos con SIGKILL
-    #     client.exec_command(f"kill -KILL {pid} || true")
+    #     # Si sigue vivo, se fuerza con SIGKILL
+    #     client.exec_command(f'kill -KILL {pid} || true')
