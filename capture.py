@@ -8,8 +8,8 @@ from utils import *
 
 # Traffic listeners supported (base commands)
 listeners = {
-    'snoop': 'snoop -o /tmp/NOMBRE -d INTERFAZ port PUERTO',
-    'tcpdump': 'tcpdump -n -v -i INTERFAZ port PUERTO -w /tmp/NOMBRE',
+    'snoop': 'snoop -o /tmp/NOMBRE -d INTERFAZ',
+    'tcpdump': 'tcpdump -n -v -i INTERFAZ -w /tmp/NOMBRE',
 }
 
 
@@ -49,7 +49,7 @@ def comando_remoto(ssh: paramiko.SSHClient, args):
     # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
     for escuchador in listeners.keys():
         if comando_ok(ssh, f'which {escuchador}'):
-            return listeners[escuchador].replace('INTERFAZ', args.interface).replace('PUERTO', str(args.port)).replace('NOMBRE', args.filename)
+            return listeners[escuchador].replace('INTERFAZ', args.interface).replace('NOMBRE', args.filename)
 
     # Ningun programa de escucha de los disponibles existe en la maquina remota
     soltar_error('Any of the listeners supported are available on remote host', 5)
@@ -103,7 +103,6 @@ if __name__ == '__main__':
 
     # Flags de captura de trafico
     parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
-    parser.add_argument('-p', '--port', required=True, help='Remote LDAP port to listen (default 389)', type=int, default=389)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
 
     # Flags de SSH
