@@ -9,7 +9,7 @@
 
 
 # Descripción general
-Conjunto de scripts en Python para capturar información de *usuarios* y *contraseñas* en un servidor LDAP (**NO LDAPS**).
+Conjunto de scripts en Python para capturar información de *usuarios* y *contraseñas* en un servidor LDAP (**NO LDAPS**). Remota y localmente.
 
 
 # Índice
