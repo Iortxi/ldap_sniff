@@ -6,13 +6,6 @@ from utils import soltar_error
 class SSH:
     """ Clase con los metodos relacionados con las conexiones SSH de Paramiko """
 
-    # Traffic listeners supported (base commands)
-    listeners = {
-        'snoop': 'snoop -o /tmp/NOMBRE -d INTERFAZ',
-        'tcpdump': 'tcpdump -n -v -i INTERFAZ -w /tmp/NOMBRE',
-    }
-
-
     @staticmethod
     def conectarse_a_host(args):
         """ Establece la conexion SSH y devuelve sus sockets """
@@ -40,11 +33,24 @@ class SSH:
 
 
     @staticmethod
+    def verificar_interfaz_red_remota(ssh: paramiko.SSHClient, args):
+        """ Termina la ejecucion si la interfaz de red especificada por el usuario no existe en el servidor remoto """
+
+        # Comando a ejecutar remotamente ('ifconfig -a' funciona en todos los SO basados en UNIX)
+        comando = f'ifconfig -a | grep "{args.interface}: flags="'
+
+        if not SSH.comando_ok(ssh, comando):
+            soltar_error('Remote network interface does not exist', 5)
+
+
+    @staticmethod
     def recoger_y_borrar_captura(ssh: paramiko.SSHClient, scp: paramiko.SFTPClient, args):
         """ Transfiere la captura remota y la borra en el servidor remoto """
 
+        nombre_temporal = f'{args.filename}_temp'
+
         # Recoger captura guardada remotamente
-        scp.get(f'/tmp/{args.filename}', f'{args.filename}_temp')
+        scp.get(f'/tmp/{nombre_temporal}', f'./{nombre_temporal}')
         
         # Borrar captura remota
         SSH.comando_ok(ssh, f'rm -f /tmp/{args.filename}')
@@ -53,7 +59,7 @@ class SSH:
 
     @staticmethod
     def comando_ok(ssh: paramiko.SSHClient, comando: str):
-        """ Ejecuta remotamente un comando y devuelve True si se ha ejecutado correctamente """
+        """ Ejecuta remotamente un comando y devuelve True si ha sido exitoso (codigo de salida == 0) """
 
         # Ejecuta un comando pero no espera a que acabe
         _, stdout, _ = ssh.exec_command(comando)
@@ -65,13 +71,13 @@ class SSH:
 
 
     @staticmethod
-    def comando_remoto(ssh: paramiko.SSHClient, args):
+    def comando_remoto(ssh: paramiko.SSHClient, args, listeners: dict):
         """ Devuelve el comando a ejeutar en el servidor remoto para escuchar trafico """
 
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
-        for escuchador in SSH.listeners.keys():
+        for escuchador in listeners.keys():
             if SSH.comando_ok(ssh, f'which {escuchador}'):
-                return SSH.listeners[escuchador].replace('INTERFAZ', args.interface).replace('NOMBRE', args.filename)
+                return listeners[escuchador].replace('INTERFAZ', args.interface).replace('NOMBRE', f'{args.filename}_temp')
 
         # Ningun programa de escucha de los disponibles existe en la maquina remota
         soltar_error('Any of the listeners supported are available on remote host', 5)

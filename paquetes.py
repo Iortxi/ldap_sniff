@@ -1,5 +1,5 @@
 
-import os, shutil, rev_dns
+import os, rev_dns
 from scapy.all import IP, RawPcapReader, Ether, PcapWriter
 from pyasn1.codec.ber import decoder
 from pyasn1_ldap.rfc4511 import LDAPMessage
@@ -7,6 +7,13 @@ from pyasn1_ldap.rfc4511 import LDAPMessage
 
 class Trafico:
     """ Clase con los metodos relacionados con el tratamiendo de paquetes """
+
+    # Traffic listeners supported (base commands)
+    listeners = {
+        'snoop': 'snoop -o /tmp/NOMBRE -d INTERFAZ',
+        'tcpdump': 'tcpdump -n -v -i INTERFAZ -w /tmp/NOMBRE',
+    }
+
 
     @staticmethod
     def es_bind_request(data: bytes) -> bool:
@@ -123,21 +130,20 @@ class Trafico:
     def filtrar_ldap_primera_captura(captura: str, writer_output, dict_dns: dict, resolver_dns: bool, verbose: bool):
         """ Filtra los bindRequests de una captura en formato pcap y la sobreescribe """
 
-        # Nombre temporal del fichero de captura con solo los paquetes LDAP
-        nombre_temporal = f'{captura}_temp'
-
-        # Si ya existe localmente una captura de trafico con ese nombre, se sobreescribe
-        if os.path.isfile(nombre_temporal):
-            os.remove(nombre_temporal)
+        # Si ya existe localmente una captura de trafico con ese nombre, se sobreescribe para evitar conflictos
+        if os.path.isfile(captura):
+            os.remove(captura)
 
         # Escritor del fichero de captura
-        writer_captura = PcapWriter(nombre_temporal, sync=True)
+        writer_captura = PcapWriter(captura, sync=True)
 
-        # Se filtran los paquetes LDAP BindRequest de la primera captura recogida y se escriben en la captura temporal
-        Trafico.filtrar_paquetes(captura, dict_dns, resolver_dns, verbose, writer_output, writer_captura)
+        nombre_temporal = f'{captura}_temp'
 
-        # Se reemplaza el nombre temporal por el especificado por el usuario
-        shutil.move(nombre_temporal, captura)
+        # Se filtran los paquetes LDAP BindRequest de la primera captura recogida (con nombre 'temp') y se escriben en la captura permanente
+        Trafico.filtrar_paquetes(nombre_temporal, dict_dns, resolver_dns, verbose, writer_output, writer_captura)
+
+        # Se borra la captura temporal
+        os.remove(nombre_temporal)
 
         # Se cierra el escritor
         writer_captura.close()

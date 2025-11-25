@@ -7,8 +7,9 @@
 # Fichero de librerias necesarias
 !requirements.txt
 
-# README
+# READMEs
 !README.md
+!README_es.md
 
 # Ficheros de codigo fuente
 !*.py

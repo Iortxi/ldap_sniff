@@ -7,7 +7,7 @@ from utils import *
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Remote LDAP sniffer with SSH')
+    parser = argparse.ArgumentParser(description='Remote LDAP password sniffer with SSH')
 
     # Flags de captura de trafico
     parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
@@ -16,7 +16,7 @@ if __name__ == '__main__':
     # Flags de SSH
     parser.add_argument('-s', '--server', required=True, help='Remote SSH server', type=str)
     parser.add_argument('-u', '--user', required=True, help='Remote SSH user (able to capture traffic in the LDAP port)', type=str)
-    parser.add_argument('-pw', '--password', required=False, help='Remote SSH user password', type=str)
+    parser.add_argument('-p', '--password', required=False, help='Remote SSH user password', type=str)
     parser.add_argument('-pk', '--pkfile', required=False, help='Private key file', type=str)
     parser.add_argument('-pkp', '--pkfilepw', required=False, help='Private key passphrase if needed', type=str)
     parser.add_argument('-sshp', '--ssh_port', required=False, default=22, help='SSH port to connect (default 22)', type=int)
@@ -33,6 +33,12 @@ if __name__ == '__main__':
     # Argumentos parseados
     args = parser.parse_args()
 
+    # Sockets de la conexion remota SSH para ejecutar comandos y transferir archivos
+    ssh, scp = SSH.conectarse_a_host(args)
+
+    # Se verifica si la interfaz de red que ha especificado el usuario existe o no en el servidor remoto
+    SSH.verificar_interfaz_red_remota(ssh, args)
+
     # Variables auxiliares
     primero = True
     nombre_temporal = f'{args.filename}_temp'
@@ -43,11 +49,9 @@ if __name__ == '__main__':
     if args.output:
         writer_output = open(args.output, 'w', encoding='utf-8', buffering=1)
 
-    # Sockets de la conexion remota SSH para ejecutar comandos y transferir archivos
-    ssh, scp = SSH.conectarse_a_host(args)
 
     # Comando de captura a ejecutar remotamente
-    comando = SSH.comando_remoto(ssh, args)
+    comando = SSH.comando_remoto(ssh, args, Trafico.listeners)
 
     # Se inicia la primera captura
     pid_remoto = SSH.iniciar_captura(ssh, comando)
@@ -69,9 +73,6 @@ if __name__ == '__main__':
 
             # Es la primera vez que se detiene una captura
             if primero:
-                # Se modifica el nombre de la primera captura recogida
-                shutil.move(nombre_temporal, args.filename)
-
                 # Filtrar trafico LDAP de la primera captura y sobreescribirla
                 Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
 
