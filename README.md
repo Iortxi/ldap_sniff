@@ -60,11 +60,23 @@ Basically the same as [remote_capture.py](#remote_capturepy) but locally.
 ## passwords.py
 The most simple. It just filters the LDAP passwords from a traffic capture file and prints it (stdout). The capture file you submit can also have *no-LDAP* traffic. Optional reverse DNS resolution.
 
-⚠️: **IT WORKS WITH PCAP FORMAT, IF THE CAPTURE FILE YOU SUBMIT IT'S NOT PCAP, IT OVERWRITES IT TO PCAP**
+⚠️: **IT WORKS WITH FILES IN PCAP FORMAT, IF THE CAPTURE FILE YOU SUBMIT IT'S NOT PCAP, IT OVERWRITES IT TO PCAP**
 
 
 # Examples
 Here some execution examples of all the scripts and the info sniffed.
+
+### Parsed sniffed info
+Each LDAP packet with a password has this format:
+```txt
+IP_SOURCE:IP_DESTINATION:LDAP_DN:PASSWORD
+```
+
+Example:
+```txt
+156.131.157.114:121.214.161.142:cn=proxyagent,ou=profile,o=corp:PASs2
+131.251.147.188:121.214.161.142:uid=peter,ou=People,o=corp:pass2
+```
 
 ### remote_capture.py
 ```bash
@@ -86,18 +98,6 @@ Here some execution examples of all the scripts and the info sniffed.
 ./passwords.py -f capture_ldap.pcap -n
 ```
 
-### Parsed sniffed info
-Each LDAP packet with a password has this format:
-```txt
-IP_SOURCE:IP_DESTINATION:LDAP_DN:PASSWORD
-```
-
-Example:
-```txt
-156.131.157.114:121.214.161.142:cn=proxyagent,ou=profile,o=corp:PASs2
-131.251.147.188:121.214.161.142:uid=peter,ou=People,o=corp:pass2
-```
-
 
 # Modules
 The executable scripts also need a few modules:
@@ -107,28 +107,20 @@ The executable scripts also need a few modules:
 - [rev_dns.py](#rev_dnspy)
 - [utils.py](#utilspy)
 
-
 ## ssh.py
 Module that contains all the SSH-related work. It uses [Paramiko](https://www.paramiko.org/) to handle SSH and SFTP connections. It's definitely the best library in python to do that. It also executes the remote commands to capture traffic and remove the evidence in the remote server.
 
-
-# local.py
+## local.py
 The *local* version of [ssh.py](#sshpy). Basically the same without SSH. Way more simpler.
-
 
 ## paquetes.py
 **It has the traffic capture commands templates**, add more if you need to. It does the network packets treatment to filter and write the LDAP packets that contains passwords. It also does the **optional** reverse DNS resolution.
 
-
 ## rev_dns.py
-It uses a lot of public DNS servers and a **circular queue** to balance the load of DNS requests.
-
-Just one function that resolves reversely an IP to a DNS name and save that info to minimize the DNS requests. If it cannot resolve the IP, just returns the IP.
-
+It uses a lot of public DNS servers and a **circular queue** to balance the load of DNS requests. Just one function that resolves reversely an IP to a DNS name and save that info to minimize the DNS requests. If it cannot resolve the IP, just returns the IP.
 
 ## utils.py
-Auxiliar module with random fuctions. Not related to SSH connections or packet treatment.
-
+Auxiliar module with random fuctions.
 
 
 # Gitignore

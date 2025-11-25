@@ -45,49 +45,33 @@ Aquí los scripts:
 ## remote_capture.py
 
 Funciona así:
-1. Establece una conexión SSH con un servidor remoto (contraseña o clave privada). **Debes iniciar sesión como un usuario que pueda capturar tráfico**.
-2. Buscará un binario de captura de tráfico instalado en el servidor remoto. Soporta `snoop`, `tcpdump`. En [paquetes.py](#paquetespy) encontrarás las plantillas de ejecución para esos binarios; añade más si lo necesitas. 3. Iniciará la captura de tráfico en el archivo `/tmp/NAME_temp` del servidor remoto. 4. Esperará a que elijas una opción:
+1. Establece una conexión SSH con un servidor remoto (contraseña o clave privada). **Debe ser con un usuario que pueda capturar tráfico**.
+2. Se buscará un binario de captura de tráfico instalado en el servidor remoto. Soporta `snoop`, `tcpdump`.En [paquetes.py](#paquetespy) encontrarás las plantillas de ejecución para esos binarios, añade más si lo necesitas.
+3. Se iniciará la captura de tráfico en el archivo `/tmp/NAME_temp` del servidor remoto.
+4. El programa esperará a que elijas una opción:
 
-    0. Detener la captura, traer el archivo al sistema local, borrarlo del servidor remoto, filtrar el tráfico LDAP e iniciar **otra** captura en el servidor remoto (sigue ejecutando). También mezcla el tráfico LDAP recién capturado con otros archivos de captura (puedes elegir esta opción tantas veces como quieras).
+    0. Detener la captura, traer el archivo resultante a local, borrarlo en el servidor remoto, filtrar el tráfico LDAP e iniciar **otra** captura en el servidor remoto (sigue ejecutando). Se dejará solo el tráfico LDAP con contraseñas (paquetes **bindRequest**) en las capturas que se vayan recibiendo del servidor remoto, y se irán mezclando en **un solo** fichero de captura (puedes elegir esta opción tantas veces como quieras).
+    
     1. Lo mismo, pero detiene la ejecución. No iniciará otra captura remota.
 
 Se usa SSH y SFTP con **paramiko** para **toda** la comunicación con el servidor remoto.
 
 
 ## local_capture.py
-Básicamente lo mismo que [remote_capture.py](#remote_capturepy) pero local.
+Básicamente lo mismo que [remote_capture.py](#remote_capturepy) pero en local.
 
 
 ## passwords.py
-El más simple. Solo filtra las contraseñas LDAP de un archivo de captura y las imprime (stdout). El archivo puede contener tráfico *no-LDAP*. Resolución DNS inversa opcional.
+El más simple. Solo filtra las contraseñas LDAP de un archivo de captura y las imprime (stdout). El archivo-captura puede contener tráfico *no-LDAP*.
 
-⚠️: **FUNCIONA CON FORMATO PCAP; SI EL ARCHIVO NO ES PCAP, LO SOBRESCRIBE A PCAP**
+⚠️: **FUNCIONA CON CAPTURAS EN FORMATO PCAP, SI EL ARCHIVO NO ES PCAP, LO SOBRESCRIBE A PCAP**
 
 # Ejemplos
-Aquí algunos ejemplos de ejecución de los scripts y la información capturada.
-
-### remote_capture.py
-``` bash
-./remote_capture.py -i eth0 -f capture_ldap.pcap -s example.com -u peter -p password -pk id_rsa -pkp "key passphrase" [-sshp] 26 -n -v -o output.txt
-```
-
-
-### local_capture.py
-``` bash
-./local_capture.py -i eth0 -f capture_ldap.pcap -n -v -o output.txt
-```
-
-
-### passwords.py
-``` bash
-./passwords.py -f capture_ldap.pcap -n
-```
-
-
+Aquí algunos ejemplos de ejecución de la información capturada y los scripts.
 
 ### Información capturada parseada
 
-Cada paquete LDAP con contraseña tiene este formato:
+De cada paquete LDAP con contraseña (bindRequest) se guarda información en este formato:
 ``` txt
 IP_ORIGEN:IP_DESTINO:LDAP_DN:CONTRASEÑA
 ```
@@ -98,6 +82,26 @@ Ejemplo:
 131.251.147.188:121.214.161.142:uid=peter,ou=People,o=corp:pass2
 ```
 
+### remote_capture.py
+``` bash
+# Puerto 22 por defecto en el flag -sshp
+# -n para deshabilitar resolución DNS inversa de IPs
+# -v para verbose, ver la información capturada por pantalla durante la ejecución
+# -o para guardar la información capturada en un fichero de texto. De todos modos se guarda en el fichero de captura final, y luego se puede parsear con passwords.py
+./remote_capture.py -i eth0 -f capture_ldap.pcap -s ssh-server.com -u peter -p password -pk keys/id_rsa -pkp "key passphrase" [-sshp] 26 -n -v -o output.txt
+```
+
+### local_capture.py
+``` bash
+./local_capture.py -i eth0 -f capture_ldap.pcap -n -v -o output.txt
+```
+
+### passwords.py
+``` bash
+./passwords.py -f capture_ldap.pcap -n
+```
+
+
 # Módulos
 Los scripts ejecutables también requieren algunos módulos:
 - [ssh.py](#sshpy)
@@ -106,26 +110,21 @@ Los scripts ejecutables también requieren algunos módulos:
 - [rev_dns.py](#rev_dnspy)
 - [utils.py](#utilspy)
 
-
 ## ssh.py
-Módulo que contiene todo el trabajo relacionado con SSH. Usa [Paramiko](https://www.paramiko.org/) para gestionar conexiones SSH y SFTP. Ejecuta comandos remotos para capturar tráfico y borrar evidencia en el servidor.
-
+Módulo que contiene todo lo relacionado con SSH. Usa [Paramiko](https://www.paramiko.org/) para gestionar conexiones SSH y SFTP. Definitivamente la mejor librería de python para ello.
 
 ## local.py
 La versión *local* de [ssh.py](#sshpy). Básicamente lo mismo pero sin SSH. Mucho más simple.
 
-
 ## paquetes.py
-**Contiene las plantillas de los comandos de captura de tráfico**, añade más si lo necesitas. Hace el tratamiento de paquetes para filtrar y escribir los paquetes LDAP que contienen contraseñas. También realiza la resolución DNS inversa **opcional**.
+**Contiene las plantillas de los comandos de captura de tráfico**, añade más si lo necesitas. Hace el tratamiento de paquetes para filtrar y escribir los paquetes LDAP que contienen contraseñas.
 
 ## rev_dns.py
-
-Usa muchos servidores DNS públicos y una **cola circular** para balancear las peticiones. Tiene solo una función que resuelve una IP a nombre DNS y guarda esa información para minimizar peticiones. Si no puede resolver, devuelve la IP.
+Usa muchos servidores DNS públicos y una **cola circular** para balancear las peticiones DNS. Tiene solo una función que resuelve inversamente una IP y guarda esa relación (IP:nombre) para minimizar peticiones. Si no puede resolver una IP, devuelve la misma IP.
 
 ## utils.py
+Módulo auxiliar con funciones varias.
 
-Módulo auxiliar con funciones varias. No relacionado con SSH ni tratamiento de paquetes.
 
 # Gitignore
-
 Mantiene solo archivos `.py`, `README` y `requirements.txt`.
