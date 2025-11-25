@@ -2,6 +2,7 @@
 
 import argparse, os
 import utils
+from paquetes import Trafico
 
 
 if __name__ == '__main__':
@@ -15,7 +16,7 @@ if __name__ == '__main__':
         utils.soltar_error('Traffic capture file does not exist', 1)
 
     # Convertir la captura de trafico si no esta en formato pcap
-    utils.convertir_si_necesario(args.file)
+    Trafico.convertir_si_necesario(args.file)
 
     # Se filtran los paquetes LDAP con verbose activado
-    utils.filtrar_paquetes(args.file, {}, args.n, True)
+    Trafico.filtrar_paquetes(args.file, {}, args.n, True)
