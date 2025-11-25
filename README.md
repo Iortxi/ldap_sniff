@@ -31,7 +31,9 @@ Suite of python scripts for LDAP (**NOT LDAPS**) *users* and passwords sniff.
 
 # Requirements
 **IMPORTANT**: Install the dependencies of `requirements.txt`.
-
+```bash
+pip install -r requirements.txt
+```
 
 # Scripts
 Here the scripts:

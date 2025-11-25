@@ -9,7 +9,7 @@
 
 
 # Descripción general
-Conjunto de scripts en Python para olfateo (sniff) de *usuarios* y contraseñas LDAP (**NO LDAPS**).
+Conjunto de scripts en Python para capturar información de *usuarios* y *contraseñas* en un servidor LDAP (**NO LDAPS**).
 
 
 # Índice
@@ -34,6 +34,9 @@ Conjunto de scripts en Python para olfateo (sniff) de *usuarios* y contraseñas 
 
 # Requisitos
 **IMPORTANTE**: Instalar las dependencias de `requirements.txt`.
+```bash
+pip install -r requirements.txt
+```
 
 
 # Scripts
@@ -46,13 +49,13 @@ Aquí los scripts:
 
 Funciona así:
 1. Establece una conexión SSH con un servidor remoto (contraseña o clave privada). **Debe ser con un usuario que pueda capturar tráfico**.
-2. Se buscará un binario de captura de tráfico instalado en el servidor remoto. Soporta `snoop`, `tcpdump`.En [paquetes.py](#paquetespy) encontrarás las plantillas de ejecución para esos binarios, añade más si lo necesitas.
-3. Se iniciará la captura de tráfico en el archivo `/tmp/NAME_temp` del servidor remoto.
+2. Se buscará un binario de captura de tráfico instalado en el servidor remoto. Soportados `snoop`, `tcpdump`. En [paquetes.py](#paquetespy) están las plantillas de ejecución para esos binarios, añade más si lo necesitas.
+3. Se iniciará la captura de tráfico en la interfaz que hayas indicado y se guardará en el archivo `/tmp/NOMBRE_temp` del servidor remoto.
 4. El programa esperará a que elijas una opción:
 
-    0. Detener la captura, traer el archivo resultante a local, borrarlo en el servidor remoto, filtrar el tráfico LDAP e iniciar **otra** captura en el servidor remoto (sigue ejecutando). Se dejará solo el tráfico LDAP con contraseñas (paquetes **bindRequest**) en las capturas que se vayan recibiendo del servidor remoto, y se irán mezclando en **un solo** fichero de captura (puedes elegir esta opción tantas veces como quieras).
+    0. Detener la captura, traer el archivo-captura a local, borrarlo en el servidor remoto, filtrar su tráfico LDAP con contraseñas (*bindRequests*) e iniciar **otra** captura en el servidor remoto (sigue ejecutando). Se dejará solo los paquetes LDAP con contraseñas en las capturas que se vayan transfiriendo del servidor remoto, y se irán mezclando en **un solo fichero de captura** (puedes elegir esta opción tantas veces como quieras).
     
-    1. Lo mismo, pero detiene la ejecución. No iniciará otra captura remota.
+    1. Lo mismo pero no inicia otra captura remota y detiene la ejecución.
 
 Se usa SSH y SFTP con **paramiko** para **toda** la comunicación con el servidor remoto.
 
