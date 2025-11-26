@@ -95,9 +95,10 @@ if __name__ == '__main__':
 
         # Detener ejecucion si ocurre cualquier excepcion no esperada
         except:
+            SSH.parar_captura(ssh, pid_remoto)
             scp.close()
             ssh.close()
-            soltar_error('[!] Unexpected exception', 4)
+            soltar_error('Unexpected exception', 4)
 
     scp.close()
     ssh.close()
