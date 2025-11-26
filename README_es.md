@@ -49,7 +49,7 @@ Aquí los scripts:
 
 Funciona así:
 1. Establece una conexión SSH con un servidor remoto (contraseña o clave privada). **Debe ser con un usuario que pueda capturar tráfico**.
-2. Se buscará un binario de captura de tráfico instalado en el servidor remoto. Soportados `snoop`, `tcpdump`. En [paquetes.py](#paquetespy) están las plantillas de ejecución para esos binarios, añade más si lo necesitas.
+2. Se buscará un binario de captura de tráfico instalado en el servidor remoto. Soportados `snoop`, `tcpdump`, `tshark`, `dumpcap`. En [paquetes.py](#paquetespy) están las plantillas de ejecución para esos binarios, añade más si lo necesitas [PERO SIGUIENDO UNAS REGLAS](#paquetespy).
 3. Se iniciará la captura de tráfico en la interfaz que hayas indicado y se guardará en el archivo `/tmp/NOMBRE_temp` del servidor remoto.
 4. El programa esperará a que elijas una opción:
 
@@ -91,7 +91,7 @@ Ejemplo:
 # -n para deshabilitar resolución DNS inversa de IPs
 # -v para verbose, ver la información capturada por pantalla durante la ejecución
 # -o para guardar la información capturada en un fichero de texto. De todos modos se guarda en el fichero de captura final, y luego se puede parsear con passwords.py
-./remote_capture.py -i eth0 -f capture_ldap.pcap -s ssh-server.com -u peter -p password -pk keys/id_rsa -pkp "key passphrase" [-sshp] 26 -n -v -o output.txt
+./remote_capture.py -i eth0 -f capture_ldap.pcap -p 389 -s ssh-server.com -u peter -pw password -pk keys/id_rsa -pkp "key passphrase" [-sshp] 26 -n -v -o output.txt
 ```
 
 ### local_capture.py
@@ -120,7 +120,14 @@ Módulo que contiene todo lo relacionado con SSH. Usa [Paramiko](https://www.par
 La versión *local* de [ssh.py](#sshpy). Básicamente lo mismo pero sin SSH. Mucho más simple.
 
 ## paquetes.py
-**Contiene las plantillas de los comandos de captura de tráfico**, añade más si lo necesitas. Hace el tratamiento de paquetes para filtrar y escribir los paquetes LDAP que contienen contraseñas.
+**Contiene las plantillas de los comandos de captura de tráfico**.
+⚠️: **Si quieres añadir más, sigue esta sintaxis**:
+- INTERFAZ es la interfaz de red.
+- PUERTO es para filtrar trafico para solo un puerto. **AÑADE ESTE FILTRO EL ÚLTIMO EN EL COMANDO**.
+- NOMBRE es el nombre del fichero-captura en el que estará todo el tráfico LDAP mezclado. **AÑADE ESTE EL PENÚLTIMO**.
+Se puede ver cómo se utiliza esto en el método `comando_remoto()` de [ssh.py](#sshpy) y en el método `comando_escuchador()` de [local.py](#localpy).
+
+Hace el tratamiento de paquetes para filtrar y escribir los paquetes LDAP que contienen contraseñas.
 
 ## rev_dns.py
 Usa muchos servidores DNS públicos y una **cola circular** para balancear las peticiones DNS. Tiene solo una función que resuelve inversamente una IP y guarda esa relación (IP:nombre) para minimizar peticiones. Si no puede resolver una IP, devuelve la misma IP.

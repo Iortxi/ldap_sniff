@@ -77,6 +77,17 @@ class SSH:
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
         for escuchador in listeners.keys():
             if SSH.comando_ok(ssh, f'which {escuchador}'):
+                plantilla = listeners[escuchador]
+
+                # Si el usuario ha especificado un puerto, se sustituye en el comando plantilla
+                if args.port:
+                    plantilla = plantilla.replace('PUERTO', str(args.port))
+                
+                # Si no, se elimina (en las plantillas, el puerto se pone lo ultimo y el nombre del fichero captura lo penultimo)
+                else:
+                    plantilla = plantilla.split('NOMBRE')[0] + 'NOMBRE'
+
+                # Se reemplazan el resto de argumentos
                 return listeners[escuchador].replace('INTERFAZ', args.interface).replace('NOMBRE', f'{args.filename}_temp')
 
         # Ningun programa de escucha de los disponibles existe en la maquina remota

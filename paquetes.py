@@ -10,8 +10,10 @@ class Trafico:
 
     # Traffic listeners supported (base commands)
     listeners = {
-        'snoop': 'snoop -o /tmp/NOMBRE -d INTERFAZ',
-        'tcpdump': 'tcpdump -n -v -i INTERFAZ -w /tmp/NOMBRE',
+        'snoop': 'snoop -d INTERFAZ -o /tmp/NOMBRE port PUERTO',
+        'tcpdump': 'tcpdump -n -i INTERFAZ -w /tmp/NOMBRE port PUERTO',
+        'tshark': 'tshark -n -i INTERFAZ -w /tmp/NOMBRE -f "port PUERTO"',
+        'dumpcap': 'dumpcap -n -i INTERFAZ -w /tmp/NOMBRE -f "port PUERTO"',
     }
 
 

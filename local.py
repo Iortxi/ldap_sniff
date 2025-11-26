@@ -22,6 +22,7 @@ class Local:
     def comando_ok(comando: str):
         """ Ejecuta un comando y devuelve True si se ha ejecutado correctamente """
 
+        # Se ejecuta el comando y se espera a que acabe
         p = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
         return p.returncode == 0
@@ -31,9 +32,20 @@ class Local:
     def comando_escuchador(args, listeners: dict):
         """ Devuelve el comando a ejeutar localmente para escuchar trafico """
 
-        # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
+        # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista
         for escuchador in listeners.keys():
             if Local.comando_ok(f'which {escuchador}'):
+                plantilla = listeners[escuchador]
+
+                # Si el usuario ha especificado un puerto, se sustituye en el comando plantilla
+                if args.port:
+                    plantilla = plantilla.replace('PUERTO', str(args.port))
+
+                # Si no, se elimina (en las plantillas, el puerto se pone lo ultimo y el nombre del fichero captura lo penultimo)
+                else:
+                    plantilla = plantilla.split('NOMBRE')[0] + 'NOMBRE'
+
+                # Se reemplazan el resto de argumentos
                 return listeners[escuchador].replace('INTERFAZ', args.interface).replace('NOMBRE', f'{args.filename}_temp')
 
         # Ningun programa de escucha de los disponibles existe en la maquina remota
