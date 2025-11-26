@@ -12,7 +12,7 @@ if __name__ == '__main__':
     # Flags de captura de trafico
     parser.add_argument('-i', '--interface', required=True, help='Local network interface to listen', type=str)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
-    parser.add_argument('-p', '--port', required=False, help='Remote port to listen', type=int)
+    parser.add_argument('-p', '--port', required=False, help='Local port to listen', type=int)
 
     # Flag de output de informacion (IPs origen y destino, DN y contrasegna) en fichero de texto plano
     parser.add_argument('-o', '--output', required=False, help='Output file for info', type=str)
