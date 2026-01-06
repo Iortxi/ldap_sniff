@@ -1,14 +1,23 @@
 
 import paramiko, os, time
 from utils import soltar_error
+from argparse import Namespace
 
 
 class SSH:
     """ Clase con los metodos relacionados con las conexiones SSH de Paramiko """
 
     @staticmethod
-    def conectarse_a_host(args):
-        """ Establece la conexion SSH y devuelve sus sockets """
+    def conectarse_a_host(args: Namespace) -> tuple[paramiko.SSHClient, paramiko.SFTPClient]:
+        """
+        Establece una conexion SSH con un servidor.
+
+        Args:
+            args: Espacio de nombres con los argumentos de ejecución.
+
+        Returns:
+            tuple: Tupla con los sockets de la conexión (SSH, SFTP), o finaliza la ejecución si la conexión falla (autenticación, etc).
+        """
 
         # No se ha especificado ningun metodo de autenticacion
         if not args.pkfile and not args.password:
@@ -33,8 +42,14 @@ class SSH:
 
 
     @staticmethod
-    def verificar_interfaz_red_remota(ssh: paramiko.SSHClient, args):
-        """ Termina la ejecucion si la interfaz de red especificada por el usuario no existe en el servidor remoto """
+    def verificar_interfaz_red_remota(ssh: paramiko.SSHClient, args: Namespace) -> None:
+        """
+        Termina la ejecución si la interfaz de red especificada por el usuario no existe en el servidor remoto.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            args: Espacio de nombres con los argumentos de ejecución.
+        """
 
         # Comando a ejecutar remotamente ('ifconfig -a' funciona en todos los SO basados en UNIX)
         comando = f'ifconfig -a | grep "{args.interface}: flags="'
@@ -44,8 +59,15 @@ class SSH:
 
 
     @staticmethod
-    def recoger_y_borrar_captura(ssh: paramiko.SSHClient, scp: paramiko.SFTPClient, args):
-        """ Transfiere la captura remota y la borra en el servidor remoto """
+    def recoger_y_borrar_captura(ssh: paramiko.SSHClient, scp: paramiko.SFTPClient, args: Namespace) -> None:
+        """
+        Transfiere la captura remota y la borra en el servidor remoto.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            scp: Socket de conexión SFTP.
+            args: Espacio de nombres con los argumentos de ejecución.
+        """
 
         nombre_temporal = f'{args.filename}_temp'
 
@@ -58,8 +80,17 @@ class SSH:
 
 
     @staticmethod
-    def comando_ok(ssh: paramiko.SSHClient, comando: str):
-        """ Ejecuta remotamente un comando y devuelve True si ha sido exitoso (codigo de salida == 0) """
+    def comando_ok(ssh: paramiko.SSHClient, comando: str) -> bool:
+        """
+        Ejecuta remotamente un comando.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            comando: Cadena de texto con el comando a ejecutar remotamente.
+
+        Returns:
+            bool: True si el comando se ha ejecutado correctamente, False en caso contrario.
+        """
 
         # Ejecuta un comando pero no espera a que acabe
         _, stdout, _ = ssh.exec_command(comando)
@@ -71,8 +102,18 @@ class SSH:
 
 
     @staticmethod
-    def comando_remoto(ssh: paramiko.SSHClient, args, listeners: dict):
-        """ Devuelve el comando a ejeutar en el servidor remoto para escuchar trafico """
+    def comando_remoto(ssh: paramiko.SSHClient, args: Namespace, listeners: dict) -> str:
+        """
+        Comprueba qué programa de captura de tráfico existe en el servidor remoto.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            args: Espacio de nombres con los argumentos de ejecución.
+            listeners: Diccionario con las plantillas de ejecución de los comandos de escucha disponibles.
+
+        Returns:
+            str: Cadena de texto del comando a ejecutar en el servidor remoto para escuchar trafico.
+        """
 
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
         for escuchador in listeners.keys():
@@ -95,8 +136,17 @@ class SSH:
 
 
     @staticmethod
-    def iniciar_captura(ssh: paramiko.SSHClient, comando_remoto: str):
-        """ Inicia un proceso de captura remoto con el programa de captura disponible y devuelve su PID """
+    def iniciar_captura(ssh: paramiko.SSHClient, comando_remoto: str) -> int:
+        """
+        Inicia un proceso de captura remoto con el programa de captura disponible.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            comando_remoto: Cadena de texto con el comando de captura a ejecutar remotamente.
+
+        Returns:
+            int: PID del proceso de captura iniciado.
+        """
 
         # Comando que se va a dejar ejecutandose remotamente (nohup)
         comando = f'nohup {comando_remoto} > /dev/null 2>&1 & echo $!'
@@ -117,8 +167,15 @@ class SSH:
 
 
     @staticmethod
-    def parar_captura(ssh: paramiko.SSHClient, pid: int, timeout: int = 3):
-        """ Detiene el proceso de captura de trafico remoto """
+    def parar_captura(ssh: paramiko.SSHClient, pid: int, timeout: int = 3) -> None:
+        """
+        Detiene el proceso de captura de trafico remoto.
+
+        Args:
+            ssh: Socket de conexión SSH.
+            pid: Entero con el PID del proceso remoto a detener.
+            timeout: Entero con el tiempo en segundos a esperar para comprobar si el proceso remoto se ha detenido.
+        """
 
         # Se intenta finalizar el proceso con la segnal SIGTERM
         ssh.exec_command(f'kill -TERM {pid} || true')

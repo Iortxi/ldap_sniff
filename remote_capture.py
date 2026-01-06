@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import argparse, shutil
+import argparse
 from ssh import SSH
 from paquetes import Trafico
 from utils import *

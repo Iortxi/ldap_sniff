@@ -1,14 +1,20 @@
 
 import subprocess, os, signal, psutil
 from utils import soltar_error
+from argparse import Namespace
 
 
 class Local:
     """ Clase con los metodos relacionados con el tratamiento de archivos y procesos de ejecucion """
 
     @staticmethod
-    def verificar_interfaz_red(args):
-        """ Finaliza la ejecucion si la interfaz de red que ha introducido el usuario no existe """
+    def verificar_interfaz_red(args: Namespace) -> None:
+        """
+        Finaliza la ejecucion si la interfaz de red que ha introducido el usuario no existe.
+
+        Args:
+            args: Espacio de nombres con los argumentos de ejecución.
+        """
 
         # Diccionario con los nombres de las interfaces de red y su informacion
         interfaces = psutil.net_if_addrs()
@@ -19,8 +25,16 @@ class Local:
 
 
     @staticmethod
-    def comando_ok(comando: str):
-        """ Ejecuta un comando y devuelve True si se ha ejecutado correctamente """
+    def comando_ok(comando: str) -> bool:
+        """
+        Ejecuta un comando localmente.
+
+        Args: 
+            comando: Cadena de texto del comando a ejecutar.
+
+        Returns:
+            bool: True si el comando se ha ejecutado correctamente.
+        """
 
         # Se ejecuta el comando y se espera a que acabe
         p = subprocess.run(comando, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -29,8 +43,17 @@ class Local:
 
 
     @staticmethod
-    def comando_escuchador(args, listeners: dict):
-        """ Devuelve el comando a ejeutar localmente para escuchar trafico """
+    def comando_escuchador(args: Namespace, listeners: dict) -> str:
+        """
+        Busca qué comando de escucha existe en la máquina local.
+
+        Args:
+            args: Espacio de nombres con los argumentos de ejecución.
+            listeners: Diccionario con las plantillas de ejecución de los comandos de escucha disponibles.
+
+        Returns:
+            str: Cadena de texto con el comando a ejeutar localmente para escuchar trafico, en otro caso finaliza la ejecución.
+        """
 
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista
         for escuchador in listeners.keys():
@@ -53,8 +76,16 @@ class Local:
 
 
     @staticmethod
-    def iniciar_captura(comando: str):
-        """ Inicia un proceso en segundo plano con un programa de captura que este instalado y devuelve su PID """
+    def iniciar_captura(comando: str) -> int:
+        """
+        Inicia un proceso en segundo plano con un programa de captura.
+
+        Args:
+            comando: Cadena de texto con el comando de escucha a ejecutar.
+
+        Returns:
+            int: Devuelve el PID del proceso del comando ejecutado.
+        """
 
         proceso_captura = subprocess.Popen(comando, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
@@ -62,8 +93,13 @@ class Local:
 
 
     @staticmethod
-    def parar_captura(pid: int):
-        """ Detiene el proceso de captura de trafico """
+    def parar_captura(pid: int) -> None:
+        """
+        Detiene el proceso de captura de trafico.
+
+        Args:
+            pid: PID del proceso a detener.
+        """
 
         # Se envia la segnal al proceso de captura para que se detenga
         os.kill(pid, signal.SIGTERM)

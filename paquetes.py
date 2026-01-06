@@ -3,6 +3,7 @@ import os, rev_dns
 from scapy.all import IP, RawPcapReader, Ether, PcapWriter
 from pyasn1.codec.ber import decoder
 from pyasn1_ldap.rfc4511 import LDAPMessage
+from io import TextIOWrapper
 
 
 class Trafico:
@@ -19,7 +20,15 @@ class Trafico:
 
     @staticmethod
     def es_bind_request(data: bytes) -> bool:
-        """ Devuelve True si un paquete (formato bytes) es un LDAP bindRequest """
+        """
+        Analiza un paquete de red.
+
+        Args:
+            data: Paquete de red a analizar (formato bytes).
+
+        Returns:
+            bool: True si el paquete es un LDAP bindRequest, False en caso contrario.
+        """
 
         try:
             # Se calcula el offset a partir del cual empieza la capa LDAP
@@ -41,7 +50,15 @@ class Trafico:
 
     @staticmethod
     def info_bindrequest(data: bytes) -> tuple[str, str, str, str]:
-        """ Extrae informacion (IP origen, IP destino, dn y contraseña) de un paquete LDAP BindRequest (formato bytes) """
+        """
+        Extrae informacion de un paquete LDAP BindRequest.
+
+        Args:
+            data: Paquete de red LDAP bindRequest del que se extrae la información (formato bytes).
+
+        Returns:
+            tuple: Tupla con la siguiente información (IP origen, IP destino, DN, Contraseña).
+        """
 
         # Otro formato de paquete de scapy para obtener las IPs
         pkt = Ether(data)
@@ -78,8 +95,18 @@ class Trafico:
 
 
     @staticmethod
-    def filtrar_paquetes(captura: str, dict_dns: dict, resolver_dns: bool, verbose: bool, writer_output = None, writer_captura = None):
-        """ Filtra los bindRequests de 'captura' (formato pcap) y opcionalmente escribe la info extraida de los LDAP BindRequests (fichero, stdout, captura) """
+    def filtrar_paquetes(captura: str, dict_dns: dict, resolver_dns: bool, verbose: bool, writer_output: TextIOWrapper = None, writer_captura: PcapWriter = None) -> None:
+        """
+        Filtra los bindRequests de 'captura' (formato pcap) y opcionalmente escribe la info extraida de los LDAP BindRequests (fichero, stdout, captura).
+
+        Args:
+            captura: Path al fichero de captura.
+            dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
+            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
+            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
+            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
+            writer_captura: Flujo para escribir los paquetes de red en un fichero captura de tráfico.
+        """
 
         # Se itera sobre los paquetes de la captura
         for paquete, _ in RawPcapReader(captura):
@@ -112,8 +139,18 @@ class Trafico:
     
 
     @staticmethod
-    def unir_dos_capturas(captura1: str, captura2: str, writer_output, dict_dns: dict, resolver_dns: bool, verbose: bool):
-        """ Agnade los bindRequests de la segunda captura a la primera y borra la segunda """
+    def unir_dos_capturas(captura1: str, captura2: str, writer_output: TextIOWrapper, dict_dns: dict, resolver_dns: bool, verbose: bool) -> None:
+        """
+        Añade los bindRequests de la segunda captura de tráfico a la primera y borra la segunda.
+
+        Args:
+            captura1: Path al primer fichero de captura.
+            captura1: Path al segundo fichero de captura.
+            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
+            dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
+            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
+            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
+        """
 
         # Escritor en modo append para no sobreescribir los paquetes ya existentes
         writer_captura = PcapWriter(captura1, append=True, sync=True)
@@ -129,8 +166,17 @@ class Trafico:
 
 
     @staticmethod
-    def filtrar_ldap_primera_captura(captura: str, writer_output, dict_dns: dict, resolver_dns: bool, verbose: bool):
-        """ Filtra los bindRequests de una captura en formato pcap y la sobreescribe """
+    def filtrar_ldap_primera_captura(captura: str, writer_output: TextIOWrapper, dict_dns: dict, resolver_dns: bool, verbose: bool) -> None:
+        """
+        Extrae los bindRequests de una captura de tráfico en formato pcap y la sobreescribe, dejando exclusivamente estos paquetes.
+
+        Args:
+            captura: Path al fichero de captura.
+            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
+            dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
+            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
+            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
+        """
 
         # Si ya existe localmente una captura de trafico con ese nombre, se sobreescribe para evitar conflictos
         if os.path.isfile(captura):
@@ -151,10 +197,17 @@ class Trafico:
         writer_captura.close()
 
 
-
     @staticmethod
-    def es_pcap(captura: str):
-        """ Devuelve True si el fichero es una captura de trafico con formato pcap """
+    def es_pcap(captura: str) -> bool:
+        """
+        Analiza el formato de un fichero de captura de red.
+
+        Args:
+            captura: Path al fichero de captura.
+
+        Returns:
+            bool: True si el fichero de captura de red está en formato pcap, False en caso contrario.
+        """
 
         # Se toman los primeros 4 bytes del fichero para ver su formato
         with open(captura, "rb") as f:
@@ -168,8 +221,13 @@ class Trafico:
 
 
     @staticmethod
-    def convertir_si_necesario(captura: str):
-        """ Sobreescribe el fichero a formato pcap si no lo es. REQUIERE DE EDITCAP INSTALADO Y EN VARIABLE DE ENTORNO PATH """
+    def convertir_si_necesario(captura: str) -> None:
+        """
+        Sobreescribe el fichero a formato pcap si no lo es. REQUIERE DE EDITCAP INSTALADO Y EN VARIABLE DE ENTORNO PATH.
+
+        Args:
+            captura: Path al fichero de captura.
+        """
 
         if not Trafico.es_pcap(captura):
             os.system(f'editcap{'.exe' if os.name == 'nt' else ''} -F pcap {captura} {captura}')
