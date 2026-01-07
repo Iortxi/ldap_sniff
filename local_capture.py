@@ -9,15 +9,15 @@ from utils import *
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Local LDAP password sniffer')
 
-    # Flags de captura de tráfico
+    # Flags de captura de trafico
     parser.add_argument('-i', '--interface', required=True, help='Local network interface to listen', type=str)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
     parser.add_argument('-p', '--port', required=False, help='Local port to listen', type=int)
 
-    # Flag de output de información (IPs origen y destino, DN y contraseña) en fichero de texto plano
+    # Flag de output de informacion (IPs origen y destino, DN y contrasegna) en fichero de texto plano
     parser.add_argument('-o', '--output', required=False, help='Output file for info', type=str)
 
-    # Flag de resolución inversa DNS
+    # Flag de resolucion inversa DNS
     parser.add_argument('-n', required=False, help='Disable reverse DNS resolution', action='store_false')
 
     # Flag de verbose
@@ -36,7 +36,7 @@ if __name__ == '__main__':
     dict_dns = {}
     writer_output = None
 
-    # Se ha especificado un fichero de salida de información
+    # Se ha especificado un fichero de salida de informacion
     if args.output:
         writer_output = open(args.output, 'w', encoding='utf-8', buffering=1)
 
@@ -46,13 +46,13 @@ if __name__ == '__main__':
     # PID del primer proceso de captura
     pid = Local.iniciar_captura(comando)
 
-    # Bucle principal de ejecución
+    # Bucle principal de ejecucion
     while True:
         try:
-            # Espera a que el usuario seleccione una opción
+            # Espera a que el usuario seleccione una opcion
             opcion = recoger_opcion(primero)
 
-            # Cuando el usuario ha elegido una opción, se detiene el proceso de captura
+            # Cuando el usuario ha elegido una opcion, se detiene el proceso de captura
             Local.parar_captura(pid)
 
             # Mover la captura de /tmp al directorio local
@@ -67,24 +67,24 @@ if __name__ == '__main__':
                 # PID del nuevo proceso de captura
                 pid = Local.iniciar_captura(comando)
 
-            # Detener la captura y terminar la ejecución
+            # Detener la captura y terminar la ejecucion
             else:
                 seguir = False
 
 
-            # Es la primera captura de tráfico que se toma
+            # Es la primera captura de trafico que se toma
             if primero:
                 primero = False
-                # Filtrar tráfico LDAP de la primera captura y sobreescribirla
+                # Filtrar trafico LDAP de la primera captura y sobreescribirla
                 Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
 
-            # No es la primera captura de tráfico que se toma
+            # No es la primera captura de trafico que se toma
             else:
                 # Se junta la nueva captura con las anteriores
                 Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
 
 
-            # Detener la captura y terminar la ejecución
+            # Detener la captura y terminar la ejecucion
             if not seguir:
                 break
 

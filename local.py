@@ -13,13 +13,13 @@ class Local:
         Finaliza la ejecucion si la interfaz de red que ha introducido el usuario no existe.
 
         Args:
-            args: Espacio de nombres con los argumentos de ejecución.
+            args: Espacio de nombres con los argumentos de ejecucion.
         """
 
         # Diccionario con los nombres de las interfaces de red y su informacion
         interfaces = psutil.net_if_addrs()
 
-        # Si la interfaz de red introducida no existe, la ejecución termina
+        # Si la interfaz de red introducida no existe, la ejecucion termina
         if not args.interface in interfaces:
             soltar_error(f'Network interface {args.interface} does not exist', 1)
 
@@ -45,14 +45,14 @@ class Local:
     @staticmethod
     def comando_escuchador(args: Namespace, listeners: dict) -> str:
         """
-        Busca qué comando de escucha existe en la máquina local.
+        Busca que comando de escucha existe en la maquina local.
 
         Args:
-            args: Espacio de nombres con los argumentos de ejecución.
-            listeners: Diccionario con las plantillas de ejecución de los comandos de escucha disponibles.
+            args: Espacio de nombres con los argumentos de ejecucion.
+            listeners: Diccionario con las plantillas de ejecucion de los comandos de escucha disponibles.
 
         Returns:
-            str: Cadena de texto con el comando a ejeutar localmente para escuchar trafico, en otro caso finaliza la ejecución.
+            str: Cadena de texto con el comando a ejeutar localmente para escuchar trafico, en otro caso finaliza la ejecucion.
         """
 
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista

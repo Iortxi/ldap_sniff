@@ -8,8 +8,8 @@ def soltar_error(mensaje: str, codigo: int) -> NoReturn:
     Finaliza la ejecucion del programa con un mensaje de error y un codigo de salida.
 
     Args:
-        mensaje: Cadena de texto con el mensaje de error a escribir por salida estándar.
-        codigo: Entero con el código de salida con el que finalizar la ejecución.
+        mensaje: Cadena de texto con el mensaje de error a escribir por salida estandar.
+        codigo: Entero con el codigo de salida con el que finalizar la ejecucion.
     """
 
     print(f'\n[!] {mensaje}\n')
@@ -18,13 +18,13 @@ def soltar_error(mensaje: str, codigo: int) -> NoReturn:
 
 def recoger_opcion(mostrar_menu: bool) -> Literal[0, 1]:
     """
-    La ejecución queda a la espera de que el usuario ejecute una opcion. Opcionalmente muestra menu de opciones.
+    La ejecucion queda a la espera de que el usuario ejecute una opcion. Opcionalmente muestra menu de opciones.
 
     Args:
-        mostrar_menu: Booleano para mostrar o no el menú de opciones disponibles por salida estándar.
+        mostrar_menu: Booleano para mostrar o no el menu de opciones disponibles por salida estandar.
 
     Returns:
-        int: Entero con la opción escogida por el usuario (0 | 1).
+        int: Entero con la opcion escogida por el usuario (0 | 1).
     """
 
     # Menu de opciones

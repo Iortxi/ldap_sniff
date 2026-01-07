@@ -5,21 +5,21 @@ from argparse import Namespace
 
 
 class SSH:
-    """ Clase con los métodos relacionados con las conexiones SSH de Paramiko. """
+    """ Clase con los metodos relacionados con las conexiones SSH de Paramiko. """
 
     @staticmethod
     def conectarse_a_host(args: Namespace) -> tuple[paramiko.SSHClient, paramiko.SFTPClient]:
         """
-        Establece una conexión SSH con un servidor.
+        Establece una conexion SSH con un servidor.
 
         Args:
-            args: Espacio de nombres con los argumentos de ejecución.
+            args: Espacio de nombres con los argumentos de ejecucion.
 
         Returns:
-            tuple: Tupla con los sockets de la conexión (SSH, SFTP), o finaliza la ejecución si la conexión falla (autenticación, timeout, etc).
+            tuple: Tupla con los sockets de la conexion (SSH, SFTP), o finaliza la ejecucion si la conexion falla (autenticacion, timeout, etc).
         """
 
-        # No se ha especificado ningún método de autenticación
+        # No se ha especificado ningun metodo de autenticacion
         if not args.pkfile and not args.password:
             soltar_error('Password or private key file required (authentication)', 1)
 
@@ -44,11 +44,11 @@ class SSH:
     @staticmethod
     def verificar_interfaz_red_remota(ssh: paramiko.SSHClient, args: Namespace) -> None:
         """
-        Termina la ejecución si la interfaz de red especificada por el usuario no existe en el servidor remoto.
+        Termina la ejecucion si la interfaz de red especificada por el usuario no existe en el servidor remoto.
 
         Args:
-            ssh: Socket de conexión SSH.
-            args: Espacio de nombres con los argumentos de ejecución.
+            ssh: Socket de conexion SSH.
+            args: Espacio de nombres con los argumentos de ejecucion.
         """
 
         # Comando a ejecutar remotamente ('ifconfig -a' funciona en todos los SO basados en UNIX)
@@ -64,9 +64,9 @@ class SSH:
         Transfiere la captura remota y la borra en el servidor remoto.
 
         Args:
-            ssh: Socket de conexión SSH.
-            scp: Socket de conexión SFTP.
-            args: Espacio de nombres con los argumentos de ejecución.
+            ssh: Socket de conexion SSH.
+            scp: Socket de conexion SFTP.
+            args: Espacio de nombres con los argumentos de ejecucion.
         """
 
         nombre_temporal = f'{args.filename}_temp'
@@ -85,7 +85,7 @@ class SSH:
         Ejecuta remotamente un comando.
 
         Args:
-            ssh: Socket de conexión SSH.
+            ssh: Socket de conexion SSH.
             comando: Cadena de texto con el comando a ejecutar remotamente.
 
         Returns:
@@ -104,12 +104,12 @@ class SSH:
     @staticmethod
     def comando_remoto(ssh: paramiko.SSHClient, args: Namespace, listeners: dict) -> str:
         """
-        Comprueba qué programa de captura de tráfico existe en el servidor remoto.
+        Comprueba que programa de captura de trafico existe en el servidor remoto.
 
         Args:
-            ssh: Socket de conexión SSH.
-            args: Espacio de nombres con los argumentos de ejecución.
-            listeners: Diccionario con las plantillas de ejecución de los comandos de escucha disponibles.
+            ssh: Socket de conexion SSH.
+            args: Espacio de nombres con los argumentos de ejecucion.
+            listeners: Diccionario con las plantillas de ejecucion de los comandos de escucha disponibles.
 
         Returns:
             str: Cadena de texto del comando a ejecutar en el servidor remoto para escuchar trafico.
@@ -141,7 +141,7 @@ class SSH:
         Inicia un proceso de captura remoto con el programa de captura disponible.
 
         Args:
-            ssh: Socket de conexión SSH.
+            ssh: Socket de conexion SSH.
             comando_remoto: Cadena de texto con el comando de captura a ejecutar remotamente.
 
         Returns:
@@ -172,7 +172,7 @@ class SSH:
         Detiene el proceso de captura de trafico remoto.
 
         Args:
-            ssh: Socket de conexión SSH.
+            ssh: Socket de conexion SSH.
             pid: Entero con el PID del proceso remoto a detener.
             timeout: Entero con el tiempo en segundos a esperar para comprobar si el proceso remoto se ha detenido.
         """

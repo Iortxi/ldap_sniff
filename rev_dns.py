@@ -31,7 +31,7 @@ def resolver(ip: str, dict: dict) -> str:
         dict: Diccionario {IP: DNS} con las direcciones IP ya resueltas, en caso de que ya se haya procesado y no sea necesario hacerlo de nuevo.
 
     Returns:
-        str: Cadena de texto con el nombre DNS obtenido de la resolución inversa, la misma IP en caso de que la resolución inversa no haya dado resultados.
+        str: Cadena de texto con el nombre DNS obtenido de la resolucion inversa, la misma IP en caso de que la resolucion inversa no haya dado resultados.
     """
 
     global dns_servers

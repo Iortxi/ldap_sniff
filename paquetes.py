@@ -54,10 +54,10 @@ class Trafico:
         Extrae informacion de un paquete LDAP BindRequest.
 
         Args:
-            data: Paquete de red LDAP bindRequest del que se extrae la información (formato bytes).
+            data: Paquete de red LDAP bindRequest del que se extrae la informacion (formato bytes).
 
         Returns:
-            tuple: Tupla con la siguiente información (IP origen, IP destino, DN, Contraseña).
+            tuple: Tupla con la siguiente informacion (IP origen, IP destino, DN, Contrasegna).
         """
 
         # Otro formato de paquete de scapy para obtener las IPs
@@ -102,10 +102,10 @@ class Trafico:
         Args:
             captura: Path al fichero de captura.
             dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
-            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
-            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
-            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
-            writer_captura: Flujo para escribir los paquetes de red en un fichero captura de tráfico.
+            resolver_dns: Booleano para realizar resolucion inversa de nombres DNS.
+            verbose: Booleano para ver por salida estandar la informacion extraida de los paquetes de red LDAP bindRequests.
+            writer_output: Flujo para escribir la informacion extraida en un fichero de texto plano.
+            writer_captura: Flujo para escribir los paquetes de red en un fichero captura de trafico.
         """
 
         # Se itera sobre los paquetes de la captura
@@ -141,15 +141,15 @@ class Trafico:
     @staticmethod
     def unir_dos_capturas(captura1: str, captura2: str, writer_output: TextIOWrapper, dict_dns: dict, resolver_dns: bool, verbose: bool) -> None:
         """
-        Añade los bindRequests de la segunda captura de tráfico a la primera y borra la segunda.
+        Agnade los bindRequests de la segunda captura de trafico a la primera y borra la segunda.
 
         Args:
             captura1: Path al primer fichero de captura.
             captura1: Path al segundo fichero de captura.
-            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
+            writer_output: Flujo para escribir la informacion extraida en un fichero de texto plano.
             dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
-            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
-            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
+            resolver_dns: Booleano para realizar resolucion inversa de nombres DNS.
+            verbose: Booleano para ver por salida estandar la informacion extraida de los paquetes de red LDAP bindRequests.
         """
 
         # Escritor en modo append para no sobreescribir los paquetes ya existentes
@@ -168,14 +168,14 @@ class Trafico:
     @staticmethod
     def filtrar_ldap_primera_captura(captura: str, writer_output: TextIOWrapper, dict_dns: dict, resolver_dns: bool, verbose: bool) -> None:
         """
-        Extrae los bindRequests de una captura de tráfico en formato pcap y la sobreescribe, dejando exclusivamente estos paquetes.
+        Extrae los bindRequests de una captura de trafico en formato pcap y la sobreescribe, dejando exclusivamente estos paquetes.
 
         Args:
             captura: Path al fichero de captura.
-            writer_output: Flujo para escribir la información extraída en un fichero de texto plano.
+            writer_output: Flujo para escribir la informacion extraida en un fichero de texto plano.
             dict_dns: Diccionario con las direcciones IP inversamente resueltas {IP: DNS}.
-            resolver_dns: Booleano para realizar resolución inversa de nombres DNS.
-            verbose: Booleano para ver por salida estándar la información extraída de los paquetes de red LDAP bindRequests.
+            resolver_dns: Booleano para realizar resolucion inversa de nombres DNS.
+            verbose: Booleano para ver por salida estandar la informacion extraida de los paquetes de red LDAP bindRequests.
         """
 
         # Si ya existe localmente una captura de trafico con ese nombre, se sobreescribe para evitar conflictos
@@ -206,7 +206,7 @@ class Trafico:
             captura: Path al fichero de captura.
 
         Returns:
-            bool: True si el fichero de captura de red está en formato pcap, False en caso contrario.
+            bool: True si el fichero de captura de red esta en formato pcap, False en caso contrario.
         """
 
         # Se toman los primeros 4 bytes del fichero para ver su formato
