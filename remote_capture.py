@@ -9,7 +9,7 @@ from utils import *
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Remote LDAP password sniffer with SSH')
 
-    # Flags de captura de trafico
+    # Flags de captura de tráfico
     parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
     parser.add_argument('-p', '--port', required=False, help='Remote port to listen', type=int)
@@ -22,10 +22,10 @@ if __name__ == '__main__':
     parser.add_argument('-pkp', '--pkfilepw', required=False, help='Private key passphrase if needed', type=str)
     parser.add_argument('-sshp', '--ssh_port', required=False, default=22, help='SSH port to connect (default 22)', type=int)
 
-    # Flag de output de informacion (IPs origen y destino, DN y contrasegna) en fichero de texto plano
+    # Flag de output de información (IPs origen y destino, DN y contraseña) en fichero de texto plano
     parser.add_argument('-o', '--output', required=False, help='Output file for info', type=str)
 
-    # Flag de resolucion inversa DNS
+    # Flag de resolución inversa DNS
     parser.add_argument('-n', required=False, help='Disable reverse DNS resolution', action='store_false')
 
     # Flag de verbose
@@ -34,7 +34,7 @@ if __name__ == '__main__':
     # Argumentos parseados
     args = parser.parse_args()
 
-    # Sockets de la conexion remota SSH para ejecutar comandos y transferir archivos
+    # Sockets de la conexión remota SSH para ejecutar comandos y transferir archivos
     ssh, scp = SSH.conectarse_a_host(args)
 
     # Se verifica si la interfaz de red que ha especificado el usuario existe o no en el servidor remoto
@@ -42,11 +42,12 @@ if __name__ == '__main__':
 
     # Variables auxiliares
     primero = True
+    seguir = True
     nombre_temporal = f'{args.filename}_temp'
     dict_dns = {}
     writer_output = None
 
-    # Se ha especificado un fichero de salida de informacion
+    # Se ha especificado un fichero de salida de información
     if args.output:
         writer_output = open(args.output, 'w', encoding='utf-8', buffering=1)
 
@@ -57,41 +58,49 @@ if __name__ == '__main__':
     # Se inicia la primera captura
     pid_remoto = SSH.iniciar_captura(ssh, comando)
 
-    # Bucle infinito de ejecucion
+    # Bucle infinito de ejecución
     while True:
         try:
-            # Espera a que el usuario seleccione una opcion
+            # Espera a que el usuario seleccione una opción
             opcion = recoger_opcion(primero)
 
-            # En cuanto el usuario elige una opcion, se detiene la captura de trafico remota
+            # En cuanto el usuario elige una opción, se detiene la captura de tráfico remota
             SSH.parar_captura(ssh, pid_remoto)
 
-            # Se toma la captura de trafico remota y se borra en el servidor remoto
+            # Se toma la captura de tráfico remota y se borra en el servidor remoto
             SSH.recoger_y_borrar_captura(ssh, scp, args)
 
             # Convertir la captura recogida a formato pcap si es necesario
             Trafico.convertir_si_necesario(nombre_temporal)
 
-            # Es la primera vez que se detiene una captura
-            if primero:
-                primero = False
-                # Filtrar trafico LDAP de la primera captura y sobreescribirla
-                Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
-
-            # No es la primera captura que se detiene
-            else:
-                # Se filtra el trafico LDAP de la captura remota recogida y se une a las ya existentes en una sola
-                Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
 
             # Detener captura e iniciar otra
             if opcion == 0:
                 pid_remoto = SSH.iniciar_captura(ssh, comando)
 
             # Detener captura y salir del bucle
-            elif opcion == 1:
+            else:
+                seguir = False
+
+
+            # Es la primera vez que se detiene una captura
+            if primero:
+                primero = False
+                # Filtrar tráfico LDAP bindRequests de la primera captura y sobreescribirla
+                Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
+
+            # No es la primera captura que se detiene
+            else:
+                # Se filtra el tráfico LDAP bindRequests de la captura remota recogida y se une a las ya existentes en una sola
+                Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
+
+
+            # Detener la captura y terminar la ejecución
+            if not seguir:
                 break
 
-        # Detener ejecucion si ocurre cualquier excepcion no esperada
+
+        # Detener ejecución si ocurre cualquier excepción no esperada
         except:
             SSH.parar_captura(ssh, pid_remoto)
             scp.close()

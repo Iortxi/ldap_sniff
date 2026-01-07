@@ -19,7 +19,7 @@ class Local:
         # Diccionario con los nombres de las interfaces de red y su informacion
         interfaces = psutil.net_if_addrs()
 
-        # Si la interfaz de red introducida no existe, la ejecucion termina
+        # Si la interfaz de red introducida no existe, la ejecución termina
         if not args.interface in interfaces:
             soltar_error(f'Network interface {args.interface} does not exist', 1)
 

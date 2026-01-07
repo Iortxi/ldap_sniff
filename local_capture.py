@@ -9,15 +9,15 @@ from utils import *
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Local LDAP password sniffer')
 
-    # Flags de captura de trafico
+    # Flags de captura de tráfico
     parser.add_argument('-i', '--interface', required=True, help='Local network interface to listen', type=str)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
     parser.add_argument('-p', '--port', required=False, help='Local port to listen', type=int)
 
-    # Flag de output de informacion (IPs origen y destino, DN y contrasegna) en fichero de texto plano
+    # Flag de output de información (IPs origen y destino, DN y contraseña) en fichero de texto plano
     parser.add_argument('-o', '--output', required=False, help='Output file for info', type=str)
 
-    # Flag de resolucion inversa DNS
+    # Flag de resolución inversa DNS
     parser.add_argument('-n', required=False, help='Disable reverse DNS resolution', action='store_false')
 
     # Flag de verbose
@@ -31,6 +31,7 @@ if __name__ == '__main__':
 
     # Variables auxiliares
     primero = True
+    seguir = True
     nombre_temporal = f'{args.filename}_temp'
     dict_dns = {}
     writer_output = None
@@ -61,7 +62,14 @@ if __name__ == '__main__':
             Trafico.convertir_si_necesario(nombre_temporal)
 
 
-            # AQUI INICIAR OTRA CAPTURA
+            # Detener la captura y seguir
+            if opcion == 0:
+                # PID del nuevo proceso de captura
+                pid = Local.iniciar_captura(comando)
+
+            # Detener la captura y terminar la ejecución
+            else:
+                seguir = False
 
 
             # Es la primera captura de tráfico que se toma
@@ -75,13 +83,9 @@ if __name__ == '__main__':
                 # Se junta la nueva captura con las anteriores
                 Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
 
-            # Detener la captura y seguir
-            if opcion == 0:
-                # PID del nuevo proceso de captura
-                pid = Local.iniciar_captura(comando)
 
             # Detener la captura y terminar la ejecución
-            else:
+            if not seguir:
                 break
 
         except:
