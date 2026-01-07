@@ -115,6 +115,13 @@ class SSH:
             str: Cadena de texto del comando a ejecutar en el servidor remoto para escuchar trafico.
         """
 
+        # Primero se prueba el comando escuchador especificado por el usuario, si no funciona, se muestra warning y se prueba el resto
+        if args.command and SSH.comando_ok(f'which {args.command}'):
+            return listeners[args.command].replace('INTERFAZ', args.interface).replace('NOMBRE', f'{args.filename}_temp')
+        else:
+            print(f'[!] WARNING: Specified listener command does not exist. Trying with the others supported')
+
+
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista en la maquina remota
         for escuchador in listeners.keys():
             if SSH.comando_ok(ssh, f'which {escuchador}'):

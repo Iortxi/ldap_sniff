@@ -13,6 +13,7 @@ if __name__ == '__main__':
     parser.add_argument('-i', '--interface', required=True, help='Remote network interface to listen', type=str)
     parser.add_argument('-f', '--filename', required=True, help='File name for the mixed traffic capture file', type=str)
     parser.add_argument('-p', '--port', required=False, help='Remote port to listen', type=int)
+    parser.add_argument('-c', '--command', required=False, help=f'Listener command to use, availables: ({",".join(Trafico.listeners.keys())})', type=str)
 
     # Flags de SSH
     parser.add_argument('-s', '--server', required=True, help='Remote SSH server', type=str)
@@ -33,6 +34,11 @@ if __name__ == '__main__':
 
     # Argumentos parseados
     args = parser.parse_args()
+
+
+    # Se verifica si el comando escuchador especificado esta soportado
+    if args.command and args.command.lower() not in Trafico.listeners.keys():
+        soltar_error('Listener command specified not supported', 6)
 
     # Sockets de la conexion remota SSH para ejecutar comandos y transferir archivos
     ssh, scp = SSH.conectarse_a_host(args)

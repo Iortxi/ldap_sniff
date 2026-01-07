@@ -55,6 +55,13 @@ class Local:
             str: Cadena de texto con el comando a ejeutar localmente para escuchar trafico, en otro caso finaliza la ejecucion.
         """
 
+        # Primero se prueba el comando escuchador especificado por el usuario, si no funciona, se muestra warning y se prueba el resto
+        if args.command and Local.comando_ok(f'which {args.command}'):
+            return listeners[args.command].replace('INTERFAZ', args.interface).replace('NOMBRE', f'{args.filename}_temp')
+        else:
+            print(f'[!] WARNING: Specified listener command does not exist. Trying with the others supported')
+
+
         # Se itera sobre los programas de escucha disponibles. Se usa el primero que exista
         for escuchador in listeners.keys():
             if Local.comando_ok(f'which {escuchador}'):
