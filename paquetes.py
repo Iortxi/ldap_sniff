@@ -7,7 +7,7 @@ from io import TextIOWrapper
 
 
 class Trafico:
-    """ Clase con los metodos relacionados con el tratamiendo de paquetes """
+    """ Clase con los metodos relacionados con el tratamiendo de paquetes. """
 
     # Traffic listeners supported (base commands)
     listeners = {

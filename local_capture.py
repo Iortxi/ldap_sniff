@@ -35,7 +35,7 @@ if __name__ == '__main__':
     dict_dns = {}
     writer_output = None
 
-    # Se ha especificado un fichero de salida de informacion
+    # Se ha especificado un fichero de salida de información
     if args.output:
         writer_output = open(args.output, 'w', encoding='utf-8', buffering=1)
 
@@ -45,13 +45,13 @@ if __name__ == '__main__':
     # PID del primer proceso de captura
     pid = Local.iniciar_captura(comando)
 
-    # Bucle principal de ejecucion
+    # Bucle principal de ejecución
     while True:
         try:
-            # Espera a que el usuario seleccione una opcion
+            # Espera a que el usuario seleccione una opción
             opcion = recoger_opcion(primero)
 
-            # Cuando el usuario ha elegido una opcion, se detiene el proceso de captura
+            # Cuando el usuario ha elegido una opción, se detiene el proceso de captura
             Local.parar_captura(pid)
 
             # Mover la captura de /tmp al directorio local
@@ -60,25 +60,27 @@ if __name__ == '__main__':
             # Se convierte la captura a formato pcap si no lo esta
             Trafico.convertir_si_necesario(nombre_temporal)
 
-            # Es la primera captura de trafico que se toma
+
+            # AQUI INICIAR OTRA CAPTURA
+
+
+            # Es la primera captura de tráfico que se toma
             if primero:
-                # Filtrar trafico LDAP de la primera captura y sobreescribirla
+                primero = False
+                # Filtrar tráfico LDAP de la primera captura y sobreescribirla
                 Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
 
-                primero = False
-
-            # No es la primera captura de trafico que se toma
+            # No es la primera captura de tráfico que se toma
             else:
                 # Se junta la nueva captura con las anteriores
                 Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
-
 
             # Detener la captura y seguir
             if opcion == 0:
                 # PID del nuevo proceso de captura
                 pid = Local.iniciar_captura(comando)
 
-            # Detener la captura y terminar la ejecucion
+            # Detener la captura y terminar la ejecución
             else:
                 break
 

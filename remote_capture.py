@@ -74,16 +74,14 @@ if __name__ == '__main__':
 
             # Es la primera vez que se detiene una captura
             if primero:
+                primero = False
                 # Filtrar trafico LDAP de la primera captura y sobreescribirla
                 Trafico.filtrar_ldap_primera_captura(args.filename, writer_output, dict_dns, args.n, args.v)
-
-                primero = False
 
             # No es la primera captura que se detiene
             else:
                 # Se filtra el trafico LDAP de la captura remota recogida y se une a las ya existentes en una sola
                 Trafico.unir_dos_capturas(args.filename, nombre_temporal, writer_output, dict_dns, args.n, args.v)
-
 
             # Detener captura e iniciar otra
             if opcion == 0:

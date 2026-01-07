@@ -5,7 +5,7 @@ from argparse import Namespace
 
 
 class Local:
-    """ Clase con los metodos relacionados con el tratamiento de archivos y procesos de ejecucion """
+    """ Clase con los metodos relacionados con el tratamiento de archivos y procesos de ejecucion. """
 
     @staticmethod
     def verificar_interfaz_red(args: Namespace) -> None:

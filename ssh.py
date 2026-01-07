@@ -5,21 +5,21 @@ from argparse import Namespace
 
 
 class SSH:
-    """ Clase con los metodos relacionados con las conexiones SSH de Paramiko """
+    """ Clase con los métodos relacionados con las conexiones SSH de Paramiko. """
 
     @staticmethod
     def conectarse_a_host(args: Namespace) -> tuple[paramiko.SSHClient, paramiko.SFTPClient]:
         """
-        Establece una conexion SSH con un servidor.
+        Establece una conexión SSH con un servidor.
 
         Args:
             args: Espacio de nombres con los argumentos de ejecución.
 
         Returns:
-            tuple: Tupla con los sockets de la conexión (SSH, SFTP), o finaliza la ejecución si la conexión falla (autenticación, etc).
+            tuple: Tupla con los sockets de la conexión (SSH, SFTP), o finaliza la ejecución si la conexión falla (autenticación, timeout, etc).
         """
 
-        # No se ha especificado ningun metodo de autenticacion
+        # No se ha especificado ningún método de autenticación
         if not args.pkfile and not args.password:
             soltar_error('Password or private key file required (authentication)', 1)
 
